@@ -1,0 +1,155 @@
+<html>
+<body>
+<script>
+
+function CalVector(x, y, z) {
+    this.x = x || 0.0;
+    this.y = y || 0.0;
+    this.z = z || 0.0;
+}
+
+function CalVector4(x, y, z, w) {
+    this.x = x || 0.0;
+    this.y = y || 0.0;
+    this.z = z || 0.0;
+    this.w = w || 0.0;
+}
+
+// 3x3 transform matrix plus a translation 3-vector (stored in the w components
+// of the rows.  This struct needs to be 16-byte aligned for SSE.
+function BoneTransform() {
+    this.rowx = new CalVector4();
+    this.rowy = new CalVector4();
+    this.rowz = new CalVector4();
+}
+
+function Influence() {
+    this.boneId = -1;
+    this.weight = 0;
+    this.lastInfluenceForThisVertex = false;
+}
+
+function Vertex() {
+    this.position = new CalVector4;
+    this.normal = new CalVector4;
+}
+
+
+function ScaleMatrix(result, mat, s) {
+  result.rowx.x = s * mat.rowx.x;
+  result.rowx.y = s * mat.rowx.y;
+  result.rowx.z = s * mat.rowx.z;
+  result.rowx.w = s * mat.rowx.w;
+  result.rowy.x = s * mat.rowy.x;
+  result.rowy.y = s * mat.rowy.y;
+  result.rowy.z = s * mat.rowy.z;
+  result.rowy.w = s * mat.rowy.w;
+  result.rowz.x = s * mat.rowz.x;
+  result.rowz.y = s * mat.rowz.y;
+  result.rowz.z = s * mat.rowz.z;
+  result.rowz.w = s * mat.rowz.w;
+}
+function AddScaledMatrix(result, mat, s) {
+  result.rowx.x += s * mat.rowx.x;
+  result.rowx.y += s * mat.rowx.y;
+  result.rowx.z += s * mat.rowx.z;
+  result.rowx.w += s * mat.rowx.w;
+  result.rowy.x += s * mat.rowy.x;
+  result.rowy.y += s * mat.rowy.y;
+  result.rowy.z += s * mat.rowy.z;
+  result.rowy.w += s * mat.rowy.w;
+  result.rowz.x += s * mat.rowz.x;
+  result.rowz.y += s * mat.rowz.y;
+  result.rowz.z += s * mat.rowz.z;
+  result.rowz.w += s * mat.rowz.w;
+}
+function TransformPoint(result, m, v) {
+  result.x = m.rowx.x * v.x + m.rowx.y * v.y + m.rowx.z * v.z + m.rowx.w;
+  result.y = m.rowy.x * v.x + m.rowy.y * v.y + m.rowy.z * v.z + m.rowy.w;
+  result.z = m.rowz.x * v.x + m.rowz.y * v.y + m.rowz.z * v.z + m.rowz.w;
+}
+function TransformVector(result, m, v) {
+  result.x = m.rowx.x * v.x + m.rowx.y * v.y + m.rowx.z * v.z;
+  result.y = m.rowy.x * v.x + m.rowy.y * v.y + m.rowy.z * v.z;
+  result.z = m.rowz.x * v.x + m.rowz.y * v.y + m.rowz.z * v.z;
+}
+
+function assert(cond) {
+    if (!cond) {
+	alert("assert failed");
+	throw 'assert failed';
+    }
+}
+
+function calculateVerticesAndNormals(
+  boneTransforms,
+  vertices,
+  influences,
+  output_vertex
+) {
+    var vertexCount = vertices.length;
+    assert(vertices.length == influences.length);
+
+    const total_transform = new BoneTransform;
+
+    var influenceId = 0;
+    var vertexId = 0;
+    var outputVertexId = 0;
+
+    // calculate all submesh vertices
+    while (vertexCount--) {
+	ScaleMatrix(total_transform, boneTransforms[influences[influenceId].boneId], influences[influenceId].weight);
+
+	while (!influences[influenceId].lastInfluenceForThisVertex) {
+	    ++influenceId;
+	    AddScaledMatrix(total_transform, boneTransforms[influences[influenceId].boneId], influences[influenceId].weight);
+	}
+
+	TransformPoint(output_vertex[outputVertexId++], total_transform, vertices[vertexId].position);
+	TransformVector(output_vertex[outputVertexId++], total_transform, vertices[vertexId].normal);
+	++vertexId;
+    }
+}
+
+function main() {
+    const N = 10000;
+
+    const v = []; // Vertex
+    const i = []; // Influence
+    for (var k = 0; k < N; ++k) {
+	const vertex = new Vertex;
+	vertex.position = new CalVector(1.0, 2.0, 3.0);
+	vertex.normal = new CalVector(0.0, 0.0, 1.0);
+	v.push(vertex);
+
+	const influence = new Influence;
+	influence.boneId = 0;
+	influence.weight = 1.0;
+	influence.lastInfluenceForThisVertex = true;
+	i.push(influence);
+    }
+
+    var bt = [new BoneTransform];
+
+    var output = new Array(N * 2);
+    for (var k = 0; k < N * 2; ++k) {
+	output[k] = new CalVector4;
+    }
+
+    var vertices_skinned = 0;
+
+    const start = new Date();
+    const now = new Date();
+    while ((new Date() - start) < 1000) {
+	calculateVerticesAndNormals(bt, v, i, output);
+	vertices_skinned += N;
+    }
+
+    var elapsed = (new Date()) - start;
+    alert("Skinned vertices per second: " + vertices_skinned * 1000 / elapsed);
+}
+
+main();
+
+</script>
+</html>
