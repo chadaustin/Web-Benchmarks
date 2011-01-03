@@ -2,12 +2,6 @@
 <body>
 <script>
 
-function CalVector(x, y, z) {
-    this.x = x || 0.0;
-    this.y = y || 0.0;
-    this.z = z || 0.0;
-}
-
 function CalVector4(x, y, z, w) {
     this.x = x || 0.0;
     this.y = y || 0.0;
@@ -18,9 +12,18 @@ function CalVector4(x, y, z, w) {
 // 3x3 transform matrix plus a translation 3-vector (stored in the w components
 // of the rows.  This struct needs to be 16-byte aligned for SSE.
 function BoneTransform() {
-    this.rowx = new CalVector4();
-    this.rowy = new CalVector4();
-    this.rowz = new CalVector4();
+    this.rowx_x = 0.0;
+    this.rowx_y = 0.0;
+    this.rowx_z = 0.0;
+    this.rowx_w = 0.0;
+    this.rowy_x = 0.0;
+    this.rowy_y = 0.0;
+    this.rowy_z = 0.0;
+    this.rowy_w = 0.0;
+    this.rowz_x = 0.0;
+    this.rowz_y = 0.0;
+    this.rowz_z = 0.0;
+    this.rowz_w = 0.0;
 }
 
 function Influence() {
@@ -36,42 +39,42 @@ function Vertex() {
 
 
 function ScaleMatrix(result, mat, s) {
-  result.rowx.x = s * mat.rowx.x;
-  result.rowx.y = s * mat.rowx.y;
-  result.rowx.z = s * mat.rowx.z;
-  result.rowx.w = s * mat.rowx.w;
-  result.rowy.x = s * mat.rowy.x;
-  result.rowy.y = s * mat.rowy.y;
-  result.rowy.z = s * mat.rowy.z;
-  result.rowy.w = s * mat.rowy.w;
-  result.rowz.x = s * mat.rowz.x;
-  result.rowz.y = s * mat.rowz.y;
-  result.rowz.z = s * mat.rowz.z;
-  result.rowz.w = s * mat.rowz.w;
+  result.rowx_x = s * mat.rowx_x;
+  result.rowx_y = s * mat.rowx_y;
+  result.rowx_z = s * mat.rowx_z;
+  result.rowx_w = s * mat.rowx_w;
+  result.rowy_x = s * mat.rowy_x;
+  result.rowy_y = s * mat.rowy_y;
+  result.rowy_z = s * mat.rowy_z;
+  result.rowy_w = s * mat.rowy_w;
+  result.rowz_x = s * mat.rowz_x;
+  result.rowz_y = s * mat.rowz_y;
+  result.rowz_z = s * mat.rowz_z;
+  result.rowz_w = s * mat.rowz_w;
 }
 function AddScaledMatrix(result, mat, s) {
-  result.rowx.x += s * mat.rowx.x;
-  result.rowx.y += s * mat.rowx.y;
-  result.rowx.z += s * mat.rowx.z;
-  result.rowx.w += s * mat.rowx.w;
-  result.rowy.x += s * mat.rowy.x;
-  result.rowy.y += s * mat.rowy.y;
-  result.rowy.z += s * mat.rowy.z;
-  result.rowy.w += s * mat.rowy.w;
-  result.rowz.x += s * mat.rowz.x;
-  result.rowz.y += s * mat.rowz.y;
-  result.rowz.z += s * mat.rowz.z;
-  result.rowz.w += s * mat.rowz.w;
+  result.rowx_x += s * mat.rowx_x;
+  result.rowx_y += s * mat.rowx_y;
+  result.rowx_z += s * mat.rowx_z;
+  result.rowx_w += s * mat.rowx_w;
+  result.rowy_x += s * mat.rowy_x;
+  result.rowy_y += s * mat.rowy_y;
+  result.rowy_z += s * mat.rowy_z;
+  result.rowy_w += s * mat.rowy_w;
+  result.rowz_x += s * mat.rowz_x;
+  result.rowz_y += s * mat.rowz_y;
+  result.rowz_z += s * mat.rowz_z;
+  result.rowz_w += s * mat.rowz_w;
 }
 function TransformPoint(result, m, v) {
-  result.x = m.rowx.x * v.x + m.rowx.y * v.y + m.rowx.z * v.z + m.rowx.w;
-  result.y = m.rowy.x * v.x + m.rowy.y * v.y + m.rowy.z * v.z + m.rowy.w;
-  result.z = m.rowz.x * v.x + m.rowz.y * v.y + m.rowz.z * v.z + m.rowz.w;
+  result.x = m.rowx_x * v.x + m.rowx_y * v.y + m.rowx_z * v.z + m.rowx_w;
+  result.y = m.rowy_x * v.x + m.rowy_y * v.y + m.rowy_z * v.z + m.rowy_w;
+  result.z = m.rowz_x * v.x + m.rowz_y * v.y + m.rowz_z * v.z + m.rowz_w;
 }
 function TransformVector(result, m, v) {
-  result.x = m.rowx.x * v.x + m.rowx.y * v.y + m.rowx.z * v.z;
-  result.y = m.rowy.x * v.x + m.rowy.y * v.y + m.rowy.z * v.z;
-  result.z = m.rowz.x * v.x + m.rowz.y * v.y + m.rowz.z * v.z;
+  result.x = m.rowx_x * v.x + m.rowx_y * v.y + m.rowx_z * v.z;
+  result.y = m.rowy_x * v.x + m.rowy_y * v.y + m.rowy_z * v.z;
+  result.z = m.rowz_x * v.x + m.rowz_y * v.y + m.rowz_z * v.z;
 }
 
 function assert(cond) {
@@ -118,8 +121,8 @@ function main() {
     const i = []; // Influence
     for (var k = 0; k < N; ++k) {
 	const vertex = new Vertex;
-	vertex.position = new CalVector(1.0, 2.0, 3.0);
-	vertex.normal = new CalVector(0.0, 0.0, 1.0);
+	vertex.position = new CalVector4(1.0, 2.0, 3.0);
+	vertex.normal = new CalVector4(0.0, 0.0, 1.0);
 	v.push(vertex);
 
 	const influence = new Influence;

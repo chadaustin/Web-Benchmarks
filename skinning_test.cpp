@@ -9,30 +9,7 @@
 #define CAL3D_ALIGN_HEAD(N)
 #define CAL3D_ALIGN_TAIL(N)
 
-class CalVector
-{
-public:
-  float x ,y ,z;
-
-  CalVector asCalVector() const {
-    return *this;
-  }
-
-  void setAsPoint(const CalVector& v) {
-    *this = v;
-  }
-
-  void setAsVector(const CalVector& v) {
-    *this = v;
-  }
-
-  inline CalVector(): x(0.0f), y(0.0f), z(0.0f) {};
-  inline CalVector(const CalVector& v) : x(v.x), y(v.y), z(v.z) {};
-  inline CalVector(float vx, float vy, float vz): x(vx), y(vy), z(vz) {};
-};
-
-struct CalBase4
-{
+struct CalBase4 {
   float x, y, z, w;
 
   void set(float _x, float _y, float _z, float _w) {
@@ -40,10 +17,6 @@ struct CalBase4
     y = _y;
     z = _z;
     w = _w;
-  }
-
-  CalVector asCalVector() const {
-    return CalVector(x, y, z);
   }
 }
 CAL3D_ALIGN_TAIL(16);
@@ -63,10 +36,10 @@ struct CalVector4 : CalBase4 {
     this->w = w;
   }
 
-  void setAsVector(const CalVector& r) {
-    x = r.x;
-    y = r.y;
-    z = r.z;
+  void setAsVector(float x, float y, float z) {
+    this->x = x;
+    this->y = y;
+    this->z = z;
     w = 0.0f;
   }
 };
@@ -86,10 +59,10 @@ struct CalPoint4 : CalBase4 {
     this->w = w;
   }
 
-  void setAsPoint(const CalVector& r) {
-    x = r.x;
-    y = r.y;
-    z = r.z;
+  void setAsPoint(float x, float y, float z) {
+    x = this->x;
+    y = this->y;
+    z = this->z;
     w = 1.0f;
   }
 };
@@ -222,8 +195,8 @@ int main() {
   Vertex v[N];
   Influence i[N];
   for (int k = 0; k < N; ++k) {
-    v[k].position.setAsPoint(CalVector(1.0f, 2.0f, 3.0f));
-    v[k].normal.setAsVector(CalVector(0.0f, 0.0f, 1.0f));
+    v[k].position.setAsPoint(1.0f, 2.0f, 3.0f);
+    v[k].normal.setAsVector(0.0f, 0.0f, 1.0f);
     i[k].boneId = 0;
     i[k].weight = 1.0f;
     i[k].lastInfluenceForThisVertex = true;
