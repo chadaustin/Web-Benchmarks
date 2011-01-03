@@ -210,5 +210,11 @@ int main() {
     vertices_skinned += N;
   }
   clock_t elapsed = clock() - start;
-  printf("Skinned vertices per second: %d\n", (int)(vertices_skinned * CLOCKS_PER_SEC / elapsed));
+
+  float sum = 0;
+  for (unsigned i = 0; i < N * 2; ++i) {
+    sum += (output[i].x + output[i].y + output[i].z + output[i].w);
+  }
+
+  printf("Skinned vertices per second: %d, blah=%f\n", (int)(vertices_skinned * CLOCKS_PER_SEC / elapsed), sum);
 }
