@@ -3,36 +3,6 @@
 <script type="text/javascript">
 "use strict";
 
-function CalVector(x, y, z) {
-    this.x = x || 0.0;
-    this.y = y || 0.0;
-    this.z = z || 0.0;
-}
-
-function CalVector4(x, y, z, w) {
-    this.x = x || 0.0;
-    this.y = y || 0.0;
-    this.z = z || 0.0;
-    this.w = w || 0.0;
-}
-
-// 3x3 transform matrix plus a translation 3-vector (stored in the w components
-// of the rows.  This struct needs to be 16-byte aligned for SSE.
-function BoneTransform() {
-    this.rowx_x = 0.0;
-    this.rowx_y = 0.0;
-    this.rowx_z = 0.0;
-    this.rowx_w = 0.0;
-    this.rowy_x = 0.0;
-    this.rowy_y = 0.0;
-    this.rowy_z = 0.0;
-    this.rowy_w = 0.0;
-    this.rowz_x = 0.0;
-    this.rowz_y = 0.0;
-    this.rowz_z = 0.0;
-    this.rowz_w = 0.0;
-}
-
 function Influence() {
     this.boneId = -1;
     this.weight = 0;
@@ -40,44 +10,44 @@ function Influence() {
 }
 
 function ScaleMatrix(result, mat, s) {
-  result.rowx_x = s * mat.rowx_x;
-  result.rowx_y = s * mat.rowx_y;
-  result.rowx_z = s * mat.rowx_z;
-  result.rowx_w = s * mat.rowx_w;
-  result.rowy_x = s * mat.rowy_x;
-  result.rowy_y = s * mat.rowy_y;
-  result.rowy_z = s * mat.rowy_z;
-  result.rowy_w = s * mat.rowy_w;
-  result.rowz_x = s * mat.rowz_x;
-  result.rowz_y = s * mat.rowz_y;
-  result.rowz_z = s * mat.rowz_z;
-  result.rowz_w = s * mat.rowz_w;
+  result[0] = s * mat[0];
+  result[1] = s * mat[1];
+  result[2] = s * mat[2];
+  result[3] = s * mat[3];
+  result[4] = s * mat[4];
+  result[5] = s * mat[5];
+  result[6] = s * mat[6];
+  result[7] = s * mat[7];
+  result[8] = s * mat[8];
+  result[9] = s * mat[9];
+  result[10] = s * mat[10];
+  result[11] = s * mat[11];
 }
 function AddScaledMatrix(result, mat, s) {
-  result.rowx_x += s * mat.rowx_x;
-  result.rowx_y += s * mat.rowx_y;
-  result.rowx_z += s * mat.rowx_z;
-  result.rowx_w += s * mat.rowx_w;
-  result.rowy_x += s * mat.rowy_x;
-  result.rowy_y += s * mat.rowy_y;
-  result.rowy_z += s * mat.rowy_z;
-  result.rowy_w += s * mat.rowy_w;
-  result.rowz_x += s * mat.rowz_x;
-  result.rowz_y += s * mat.rowz_y;
-  result.rowz_z += s * mat.rowz_z;
-  result.rowz_w += s * mat.rowz_w;
+  result[0] += s * mat[0];
+  result[1] += s * mat[1];
+  result[2] += s * mat[2];
+  result[3] += s * mat[3];
+  result[4] += s * mat[4];
+  result[5] += s * mat[5];
+  result[6] += s * mat[6];
+  result[7] += s * mat[7];
+  result[8] += s * mat[8];
+  result[9] += s * mat[9];
+  result[10] += s * mat[10];
+  result[11] += s * mat[11];
 }
 function TransformPoint(result, m, v, offset) {
     //alert(v[offset] + ',' + v[offset+1] + ',' + v[offset+2]);
-  result.x = m.rowx_x * v[offset] + m.rowx_y * v[offset+1] + m.rowx_z * v[offset+2] + m.rowx_w;
-  result.y = m.rowy_x * v[offset] + m.rowy_y * v[offset+1] + m.rowy_z * v[offset+2] + m.rowy_w;
-  result.z = m.rowz_x * v[offset] + m.rowz_y * v[offset+1] + m.rowz_z * v[offset+2] + m.rowz_w;
+  result[offset]   = m[0] * v[offset] + m[1] * v[offset+1] + m[2] * v[offset+2] + m[3];
+  result[offset+1] = m[4] * v[offset] + m[5] * v[offset+1] + m[6] * v[offset+2] + m[7];
+  result[offset+2] = m[8] * v[offset] + m[9] * v[offset+1] + m[10] * v[offset+2] + m[11];
 }
 function TransformVector(result, m, v, offset) {
     //alert(v[offset] + ',' + v[offset+1] + ',' + v[offset+2]);
-  result.x = m.rowx_x * v[offset] + m.rowx_y * v[offset+1] + m.rowx_z * v[offset+2];
-  result.y = m.rowy_x * v[offset] + m.rowy_y * v[offset+1] + m.rowy_z * v[offset+2];
-  result.z = m.rowz_x * v[offset] + m.rowz_y * v[offset+1] + m.rowz_z * v[offset+2];
+  result[offset]   = m[0] * v[offset] + m[1] * v[offset+1] + m[1] * v[offset+2];
+  result[offset+1] = m[4] * v[offset] + m[6] * v[offset+1] + m[7] * v[offset+2];
+  result[offset+2] = m[8] * v[offset] + m[9] * v[offset+1] + m[10] * v[offset+2];
 }
 
 function assert(cond) {
@@ -96,11 +66,10 @@ function calculateVerticesAndNormals(
     var vertexCount = influences.length;
     //assert(vertices.length == influences.length);
 
-    const total_transform = new BoneTransform;
+    const total_transform = new Float32Array(12);
 
     var influenceId = 0;
     var vertexOffset = 0;
-    var outputVertexId = 0;
 
     vertices = new Float32Array(vertices);
 
@@ -113,26 +82,12 @@ function calculateVerticesAndNormals(
 	    AddScaledMatrix(total_transform, boneTransforms[influences[influenceId].boneId], influences[influenceId].weight);
 	}
 
-	TransformPoint(output_vertex[outputVertexId++], total_transform, vertices, vertexOffset);
+	TransformPoint(output_vertex, total_transform, vertices, vertexOffset);
 	vertexOffset += 4;
-	TransformVector(output_vertex[outputVertexId++], total_transform, vertices, vertexOffset);
+	TransformVector(output_vertex, total_transform, vertices, vertexOffset);
 	vertexOffset += 4;
     }
 
-    assert(typeof(total_transform.rowx_x) == 'number');
-    assert(typeof(total_transform.rowx_y) == 'number');
-    assert(typeof(total_transform.rowx_z) == 'number');
-    assert(typeof(total_transform.rowx_w) == 'number');
-
-    assert(typeof(total_transform.rowy_x) == 'number');
-    assert(typeof(total_transform.rowy_y) == 'number');
-    assert(typeof(total_transform.rowy_z) == 'number');
-    assert(typeof(total_transform.rowy_w) == 'number');
-
-    assert(typeof(total_transform.rowz_x) == 'number');
-    assert(typeof(total_transform.rowz_y) == 'number');
-    assert(typeof(total_transform.rowz_z) == 'number');
-    assert(typeof(total_transform.rowz_w) == 'number');
 }
 
 function main() {
@@ -161,12 +116,9 @@ function main() {
 	i.push(influence);
     }
 
-    var bt = [new BoneTransform];
+    var bt = [new Float32Array(4*3)];
 
-    var output = new Array(N * 2);
-    for (var k = 0; k < N * 2; ++k) {
-	output[k] = new CalVector4;
-    }
+    var output = new Float32Array(N * 2 * 4);
 
     var vertices_skinned = 0;
 
