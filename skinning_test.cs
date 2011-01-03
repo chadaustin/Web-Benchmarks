@@ -18,27 +18,38 @@ public struct CalVector4 {
 public struct BoneTransform {
     public CalVector4 RowX, RowY, RowZ;
 
-    public BoneTransform Scaled (float s) {
-        return new BoneTransform {
-            RowX = new CalVector4(RowX.X * s, RowX.Y * s, RowX.Z * s, RowX.Z * s),
-            RowY = new CalVector4(RowY.X * s, RowY.Y * s, RowY.Z * s, RowY.Z * s),
-            RowZ = new CalVector4(RowZ.X * s, RowZ.Y * s, RowZ.Z * s, RowZ.Z * s),
-        };
+    public void Scale (out BoneTransform result, float s) {
+        result.RowX.X = RowX.X * s;
+        result.RowX.Y = RowX.Y * s;
+        result.RowX.Z = RowX.Z * s;
+        result.RowX.W = RowX.W * s;
+
+        result.RowY.X = RowY.X * s;
+        result.RowY.Y = RowY.Y * s;
+        result.RowY.Z = RowY.Z * s;
+        result.RowY.W = RowY.W * s;
+
+        result.RowZ.X = RowZ.X * s;
+        result.RowZ.Y = RowZ.Y * s;
+        result.RowZ.Z = RowZ.Z * s;
+        result.RowZ.W = RowZ.W * s;
     }
 
-    public void AddScaled (ref BoneTransform toAdd, float s) {
-        RowX.X += toAdd.RowX.X * s;
-        RowX.Y += toAdd.RowX.Y * s;
-        RowX.Z += toAdd.RowX.Z * s;
-        RowX.W += toAdd.RowX.W * s;
-        RowY.X += toAdd.RowY.X * s;
-        RowY.Y += toAdd.RowY.Y * s;
-        RowY.Z += toAdd.RowY.Z * s;
-        RowY.W += toAdd.RowY.W * s;
-        RowZ.X += toAdd.RowZ.X * s;
-        RowZ.Y += toAdd.RowZ.Y * s;
-        RowZ.Z += toAdd.RowZ.Z * s;
-        RowZ.W += toAdd.RowZ.W * s;
+    public void AddScaled (ref BoneTransform mutate, float s) {
+        mutate.RowX.X += RowX.X * s;
+        mutate.RowX.Y += RowX.Y * s;
+        mutate.RowX.Z += RowX.Z * s;
+        mutate.RowX.W += RowX.W * s;
+
+        mutate.RowY.X += RowY.X * s;
+        mutate.RowY.Y += RowY.Y * s;
+        mutate.RowY.Z += RowY.Z * s;
+        mutate.RowY.W += RowY.W * s;
+
+        mutate.RowZ.X += RowZ.X * s;
+        mutate.RowZ.Y += RowZ.Y * s;
+        mutate.RowZ.Z += RowZ.Z * s;
+        mutate.RowZ.W += RowZ.W * s;
     }
 
     public void TransformPoint (out CalVector4 result, ref CalVector4 point) {
@@ -89,14 +100,16 @@ public static class SkinningTest {
         ) {
             var influence = influences[sourceInfluence];
 
-            totalTransform = boneTransforms[influence.BoneId].Scaled(influence.Weight);
+            boneTransforms[influence.BoneId].Scale(
+                out totalTransform, influence.Weight
+            );
 
             while (!influence.LastInfluenceForThisVertex) {
                 sourceInfluence += 1;
                 influence = influences[sourceInfluence];
 
-                totalTransform.AddScaled(
-                    ref boneTransforms[influence.BoneId], influence.Weight
+                boneTransforms[influence.BoneId].AddScaled(
+                    ref totalTransform, influence.Weight
                 );
             }
 
