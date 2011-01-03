@@ -1,3 +1,6 @@
+// compiled in cygwin with:
+// g++ -Wall -O2 -o skinning_test skinning_test.cpp
+
 #include <vector>
 #include <set>
 #include <map>
