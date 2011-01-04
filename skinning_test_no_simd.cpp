@@ -105,21 +105,6 @@ struct Vertex
 }
 CAL3D_ALIGN_TAIL(16);
 
-// calculateVerticesAndNormals_{x87,SSE_intrinsics,SSE} are:
-/*
-  SSE Optimized Skinning Without Normals or Tangents
-  Copyright (C) 2005 Id Software, Inc.
-  Written by J.M.P. van Waveren
-  This code is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
-  This code is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-  Lesser General Public License for more details.
-*/
-
 inline void ScaleMatrix(BoneTransform& result, const BoneTransform& mat, const float s) {
   result.rowx.x = s * mat.rowx.x;
   result.rowx.y = s * mat.rowx.y;
