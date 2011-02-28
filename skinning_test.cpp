@@ -8,6 +8,8 @@
 #include <math.h>
 #include <xmmintrin.h>
 #include <string.h>
+#include <stdio.h>
+#include <time.h>
 
 #define CAL3D_ALIGN_HEAD(N)
 #define CAL3D_ALIGN_TAIL(N)
