@@ -66,7 +66,7 @@ function calculateVerticesAndNormals(
     var vertexCount = influences.length;
     //assert(vertices.length == influences.length);
 
-    const total_transform = new Float32Array(12);
+    var total_transform = new Float32Array(12);
 
     var influenceId = 0;
     var vertexOffset = 0;
@@ -91,11 +91,11 @@ function calculateVerticesAndNormals(
 }
 
 function main() {
-    const N = 10000;
+    var N = 10000;
 
-    const VertexSize = 4 + 4;
-    const v = new ArrayBuffer(N * VertexSize * 4); // floats
-    const i = []; // Influence
+    var VertexSize = 4 + 4;
+    var v = new ArrayBuffer(N * VertexSize * 4); // floats
+    var i = []; // Influence
     for (var k = 0; k < N; ++k) {
 	var position = new Float32Array(v, k * VertexSize * 4, 4);
 	position[0] = 1.0;
@@ -109,7 +109,7 @@ function main() {
 	normal[2] = 1.0;
 	normal[3] = 0.0;
 
-	const influence = new Influence;
+	var influence = new Influence;
 	influence.boneId = 0;
 	influence.weight = 1.0;
 	influence.lastInfluenceForThisVertex = true;
@@ -122,8 +122,8 @@ function main() {
 
     var vertices_skinned = 0;
 
-    const start = new Date();
-    const now = new Date();
+    var start = new Date();
+    var now = new Date();
     while ((new Date() - start) < 1000) {
 	calculateVerticesAndNormals(bt, v, i, output);
 	vertices_skinned += N;

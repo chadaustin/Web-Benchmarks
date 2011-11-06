@@ -6,7 +6,6 @@
 #include <map>
 #include <assert.h>
 #include <math.h>
-#include <xmmintrin.h>
 #include <string.h>
 #include <stdio.h>
 #include <time.h>

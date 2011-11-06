@@ -1,5 +1,67 @@
 Benchmarking a software implementation of skeletal animation.
 
+Newer numbers, in skinned vertices per second, as of 2011-11-04.  Same machine as before.
+MacOS X Version 10.6.8.
+2.53 GHz Intel Core i5
+4 GB 1067 MHz DDR3
+
+C++
+===
+
+gcc, SSE intrinsics: 96 Mverts / second
+
+    $ g++ -O2 -Wall -ffast-math -o skinning_test skinning_test.cpp
+    $ ./skinning_test
+    Skinned vertices per second: 96420454, blah=0.000000
+
+gcc, scalar math: 63 Mverts / second
+
+    $ g++ -O2 -Wall -ffast-math -o skinning_test_no_simd skinning_test_no_simd.cpp
+    $ ./skinning_test_no_simd 
+    Skinned vertices per second: 63355501, blah=0.000000
+
+clang, SSE intrinsics: 102 Mverts / second
+
+    $ clang -O2 -Wall -ffast-math -o skinning_test skinning_test.cpp
+    $ ./skinning_test
+    Skinned vertices per second: 101580000, blah=0.000000
+
+clang, scalar math: 63 Mverts / second
+
+    $ clang -O2 -Wall -ffast-math -o skinning_test_no_simd skinning_test_no_simd.cpp 
+    $ ./skinning_test_no_simd 
+    Skinned vertices per second: 62928175, blah=0.000000
+
+JavaScript
+==========
+
+untyped arrays, Chrome 15: 10 Mverts / second
+typed arrays, Chrome 15: 5.8 Mverts / second
+
+untyped arrays, Firefox 7.0.1: 5.1 Mverts / second
+typed arrays, Firefox 7.0.1: 8.4 Mverts / second
+
+untyped arrays, Firefox 9 (Aurora, 9.0a2), 2.1 Mverts / second
+typed arrays, Firefox 9 (Aurora, 9.0a2), 1.9 Mverts / second
+
+Emscripten
+==========
+
+    $ python ../emscripten/tools/emmaken.py -Wall -O3 -o skinning_test_no_simd.bc skinning_test_no_simd.cpp 
+    $ python ../emscripten/emscripten.py skinning_test_no_simd.bc > skinning_test_no_simd.js 
+
+V8 trunk, r9884, 87 Kverts / second
+
+    $ ../v8-read-only/d8 skinning_test_no_simd.js 
+    Skinned vertices per second: 86872, blah=0.000000
+
+Chrome 15: 87 Kverts / second
+       
+Firefox 7: 1.0 Mverts / second
+Firefox 9 (Aurora, 9.0a2): 160 Kverts / second
+
+--------
+
 Current numbers, in skinned vertices per second, on my Macbook Pro:
 - C++: 92.3 million
 - JavaScript (Chrome 8): 3.1 million
