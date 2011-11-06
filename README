@@ -62,6 +62,8 @@ Firefox 9 (Aurora, 9.0a2): 160 Kverts / second
 
 --------
 
+OLD RESULTS FROM JANUARY 2011:
+
 Current numbers, in skinned vertices per second, on my Macbook Pro:
 - C++: 92.3 million
 - JavaScript (Chrome 8): 3.1 million
