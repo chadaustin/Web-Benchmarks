@@ -44,7 +44,22 @@ typed arrays, Firefox 7.0.1: 8.4 Mverts / second
 untyped arrays, Firefox 9 (Aurora, 9.0a2), 2.1 Mverts / second
 typed arrays, Firefox 9 (Aurora, 9.0a2), 1.9 Mverts / second
 
-Emscripten
+Emscripten (Optimized)
+==========
+
+After my previous post, Alon Zakai demonstrated how to compile with
+optimizations when using Emscripten.  https://gist.github.com/1343182
+
+    $ ./optimized_emscripten.sh
+
+    $ ../v8-read-only/d8 skinning_test_no_simd.js
+    Skinned vertices per second: 226377, blah=0.000000
+
+Chrome 15: 
+Firefox 7:
+Firefox 9a2:
+
+Emscripten (Unoptimized)
 ==========
 
     $ python ../emscripten/tools/emmaken.py -Wall -O3 -o skinning_test_no_simd.bc skinning_test_no_simd.cpp 
