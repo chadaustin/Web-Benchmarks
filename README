@@ -55,9 +55,9 @@ optimizations when using Emscripten.  https://gist.github.com/1343182
     $ ../v8-read-only/d8 skinning_test_no_simd.js
     Skinned vertices per second: 226377, blah=0.000000
 
-Chrome 15: 
-Firefox 7:
-Firefox 9a2:
+Chrome 15: Skinned vertices per second: 5184815, blah=0.000000
+Firefox 7: Skinned vertices per second: 729270, blah=0.000000
+Firefox 9a2: Skinned vertices per second: 734126, blah=0.000000
 
 Emscripten (Unoptimized)
 ==========
