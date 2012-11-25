@@ -12,7 +12,7 @@
 #include <time.h>
 
 #define CAL3D_ALIGN_HEAD(N)
-#define CAL3D_ALIGN_TAIL(N)
+#define CAL3D_ALIGN_TAIL(N) __attribute__((aligned(16)))
 
 struct CalBase4 {
   float x, y, z, w;
