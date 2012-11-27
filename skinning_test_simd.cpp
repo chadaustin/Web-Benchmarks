@@ -215,7 +215,7 @@ int main() {
   long long vertices_skinned = 0;
   
   clock_t start = clock();
-  while (clock() < start + CLOCKS_PER_SEC) {
+  while (clock() < start + CLOCKS_PER_SEC * 5) {
     calculateVerticesAndNormals_SSE_intrinsics(&bt, N, v, i, output);
     vertices_skinned += N;
   }
