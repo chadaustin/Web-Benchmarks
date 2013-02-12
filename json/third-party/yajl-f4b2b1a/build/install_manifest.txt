@@ -1,0 +1,11 @@
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/lib/libyajl.2.0.1.dylib
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/lib/libyajl.2.dylib
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/lib/libyajl.dylib
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/lib/libyajl_s.a
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/include/yajl/yajl_parse.h
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/include/yajl/yajl_gen.h
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/include/yajl/yajl_common.h
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/include/yajl/yajl_tree.h
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/include/yajl/yajl_version.h
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/bin/json_reformat
+/Users/chad/vault/projects/sajson/third-party/yajl-2.0.1/bin/json_verify

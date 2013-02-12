@@ -1,0 +1,9 @@
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/CMakeFiles/doc.dir
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/reformatter/CMakeFiles/json_reformat.dir
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/verify/CMakeFiles/json_verify.dir
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/example/CMakeFiles/parse_config.dir
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/perf/CMakeFiles/perftest.dir
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/CMakeFiles/test.dir
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/src/CMakeFiles/yajl.dir
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/src/CMakeFiles/yajl_s.dir
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/build/test/CMakeFiles/yajl_test.dir

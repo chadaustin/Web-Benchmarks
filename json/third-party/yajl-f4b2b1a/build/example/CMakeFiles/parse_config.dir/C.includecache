@@ -1,0 +1,24 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/example/parse_config.c
+stdio.h
+-
+string.h
+-
+yajl/yajl_tree.h
+/Users/chad/vault/projects/sajson/third-party/yajl-f4b2b1a/example/yajl/yajl_tree.h
+
+example/../yajl-2.0.1/include/yajl/yajl_common.h
+stddef.h
+-
+
+example/../yajl-2.0.1/include/yajl/yajl_tree.h
+yajl/yajl_common.h
+-
+

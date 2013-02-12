@@ -1,0 +1,38 @@
+import os
+
+def rapidjson(env):
+    env.AppendUnique(CPPPATH=['third-party/rapidjson-0.11/include'])
+
+def yajl(env):
+    env.AppendUnique(
+        CPPPATH=['third-party/yajl-f4b2b1a/include'],
+        LIBPATH=['#/built/libraries'])
+
+def vjson(env):
+    env.AppendUnique(
+        CPPPATH=['third-party/vjson-f571bb097ca3'],
+        LIBPATH=['#/built/libraries'])
+
+def sajson(env):
+    env.AppendUnique(
+        CPPPATH=['third-party/sajson'])
+
+def jansson(env):
+    env.AppendUnique(
+        CPPPATH=['third-party/jansson-2.4/src'])
+
+env = Environment(
+    ENV=os.environ,
+    CC='clang-mp-3.1',
+    CXX='clang++-mp-3.1',
+    CCFLAGS=['-g', '-O2', '-fno-exceptions'],
+    LINKFLAGS=['-O2'],
+    CPPDEFINES=['NDEBUG'],
+    CXXFLAGS=['-std=c++0x', '-Wall', '-Werror'])
+rapidjson(env)
+yajl(env)
+vjson(env)
+sajson(env)
+jansson(env)
+
+env.Program('perf', ['perf.cpp', 'libyajl.c', 'libjansson.c', 'libvjson.cpp'])
