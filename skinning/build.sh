@@ -5,7 +5,7 @@ mkdir -p build
 
 GCC=g++
 CLANG=clang
-EMCC=../emscripten/emcc
+EMCC=../../emscripten/emcc
 
 CFLAGS="-Wall -Werror"
 
