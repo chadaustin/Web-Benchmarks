@@ -3,7 +3,7 @@ set -e
 
 EMBEDDED_FILES=$(for x in apache_builds github_events instruments mesh update-center; do echo --preload-file testdata/$x.json; done)
 
-OPTIONS="-O2 -Wno-tautological-compare -Wno-enum-conversion"
+OPTIONS="-O2 -Wno-tautological-compare -Wno-enum-conversion -fno-exceptions"
 INCLUDES="-Ithird-party/rapidjson-0.11/include -Ithird-party/yajl-f4b2b1a/include -Ithird-party/sajson -Ithird-party/vjson-f571bb097ca3 -Ithird-party/jansson-2.4/src"
 
 set -x
