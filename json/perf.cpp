@@ -3,7 +3,8 @@
 #include <time.h>
 #include <vector>
 
-#include <rapidjson/document.h>
+// setjmp not supported in ASM_JS
+//#include <rapidjson/document.h>
 
 extern "C" {
 #include <yajl/yajl_tree.h>
@@ -134,6 +135,7 @@ private:
     char* data;
 };
 
+/* setjmp NOT SUPPORTED IN ASM_JS
 namespace rapidjson_test {
     void traverse(jsonstats& stats, const rapidjson::Value& v) {
         if (v.IsNull()) {
@@ -176,6 +178,7 @@ namespace rapidjson_test {
         traverse(stats, document);
     }
 }
+*/
 
 namespace vjson_test {
     void traverse(jsonstats& stats, json_value* node) {
@@ -441,7 +444,8 @@ struct TestImplementation {
 };
 TestImplementation test_implementations[] = {
     { "sajson", &sajson_test::test },
-    { "rapidjson", &rapidjson_test::test },
+    // TODO: setjmp not supported in ASM_JS
+    //{ "rapidjson", &rapidjson_test::test },
     { "vjson", &vjson_test::test },
     { "yajl", &yajl_test::test },
     { "jansson", &jansson_test::test },

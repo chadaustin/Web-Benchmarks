@@ -3,12 +3,15 @@ set -e
 
 EMBEDDED_FILES=$(for x in apache_builds github_events instruments mesh update-center; do echo --preload-file testdata/$x.json; done)
 
-OPTIONS="-O2 -Wno-tautological-compare -Wno-enum-conversion -fno-exceptions"
-INCLUDES="-Ithird-party/rapidjson-0.11/include -Ithird-party/yajl-f4b2b1a/include -Ithird-party/sajson -Ithird-party/vjson-f571bb097ca3 -Ithird-party/jansson-2.4/src"
+OPTIONS="-s ASM_JS=1 -O2 -fno-exceptions -s DISABLE_EXCEPTION_CATCHING=1 --llvm-lto 1 -Wno-tautological-compare -Wno-enum-conversion"
+
+# TODO: setjmp not supported in ASM_JS
+#INCLUDES="-Ithird-party/rapidjson-0.11/include -Ithird-party/yajl-f4b2b1a/include -Ithird-party/sajson -Ithird-party/vjson-f571bb097ca3 -Ithird-party/jansson-2.4/src"
+INCLUDES="-Ithird-party/yajl-f4b2b1a/include -Ithird-party/sajson -Ithird-party/vjson-f571bb097ca3 -Ithird-party/jansson-2.4/src"
 
 set -x
 $EMSCRIPTEN/em++ $OPTIONS -std=c++0x $INCLUDES -Wno-tautological-compare -Werror -std=c++11 -o perf.bc perf.cpp libvjson.cpp
 $EMSCRIPTEN/emcc $OPTIONS $INCLUDES -o libs.bc libyajl.c libjansson.c
 
-$EMSCRIPTEN/em++ $EMBEDDED_FILES $OPTIONS $INCLUDES -o perf.html perf.bc libs.bc
+$EMSCRIPTEN/em++ $EMBEDDED_FILES --minify 0 $OPTIONS $INCLUDES -o perf.html perf.bc libs.bc
 $EMSCRIPTEN/em++ $EMBEDDED_FILES $OPTIONS $INCLUDES -o perf.js perf.bc libs.bc
