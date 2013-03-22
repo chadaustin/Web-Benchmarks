@@ -8,6 +8,7 @@ CLANG=clang
 EMCC=../../emscripten/emcc
 
 CFLAGS="-Wall -Werror"
+EMFLAGS="-fno-exceptions -s DISABLE_EXCEPTION_CATCHING=1 -s ASM_JS=1 --llvm-lto 1"
 
 set -ex
 
