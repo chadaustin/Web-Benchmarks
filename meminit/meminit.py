@@ -8,6 +8,8 @@ def tinystr(s):
     s = repr(s)
     for i in range(8):
         s = s.replace('\\x0' + str(i), '\\' + str(i))
+    for i in range(8, 10):
+        s = s.replace('\\x0' + str(i), '\\1' + str(i - 8))
     return s
 
 file('meminit.json.binary', 'wb').write(data)
