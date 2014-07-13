@@ -34,11 +34,11 @@ public:
     }
 
     virtual void call_vec(const vec3f& v) override {
-        return call<void>("call_vec", memory_view(memory_view::Type::Float32Array, 3, v.data));
+        return call<void>("call_vec", typed_memory_view(3, v.data));
     }
 
     virtual void call_mat(const mat44f& m) override {
-        return call<void>("call_mat", memory_view(memory_view::Type::Float32Array, 16, m.data));
+        return call<void>("call_mat", typed_memory_view(16, m.data));
     }
 };
 
