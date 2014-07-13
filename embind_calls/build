@@ -2,6 +2,6 @@
 
 set -e
 
-EMCC_FAST_COMPILER=0 ~/imvu/emscripten/emcc -fno-threadsafe-statics -O2 -g1 --bind -s EXPORTED_FUNCTIONS='["_main"]' -s ASM_JS=0 --pre-js pre.js --post-js post.js -o bench.js bench.cpp &
-EMCC_FAST_COMPILER=0 ~/imvu/emscripten/emcc -fno-threadsafe-statics -O2 -g1 --bind -s EXPORTED_FUNCTIONS='["_main"]' -s ASM_JS=0 --pre-js pre.js --post-js post.js -o benchpage.html bench.cpp &
+EMCC_FAST_COMPILER=1 ~/imvu/emscripten/emcc -fno-threadsafe-statics -O2 -g3 --bind -s EXPORTED_FUNCTIONS='["_main"]' -s ASM_JS=1 --pre-js pre.js --post-js post.js -o bench.js bench.cpp &
+EMCC_FAST_COMPILER=1 ~/imvu/emscripten/emcc -fno-threadsafe-statics -O2 -g3 --bind -s EXPORTED_FUNCTIONS='["_main"]' -s ASM_JS=1 --pre-js pre.js --post-js post.js -o benchpage.html bench.cpp &
 wait
