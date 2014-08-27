@@ -32,6 +32,11 @@ $CLANG $CFLAGS -O1 -o build/clang-O1-simd skinning_test_simd.cpp
 $CLANG $CFLAGS -O2 -o build/clang-O2-simd skinning_test_simd.cpp
 $CLANG $CFLAGS -O3 -o build/clang-O3-simd skinning_test_simd.cpp
 
+$CLANG $CFLAGS -O0 -o build/clang-O0-vector skinning_test_vector.cpp
+$CLANG $CFLAGS -O1 -o build/clang-O1-vector skinning_test_vector.cpp
+$CLANG $CFLAGS -O2 -o build/clang-O2-vector skinning_test_vector.cpp
+$CLANG $CFLAGS -O3 -o build/clang-O3-vector skinning_test_vector.cpp
+
 $EMCC $EMFLAGS -O0 -o build/emscripten-O0-scalar.js skinning_test_scalar.cpp
 $EMCC $EMFLAGS -O1 -o build/emscripten-O1-scalar.js skinning_test_scalar.cpp
 $EMCC $EMFLAGS -O2 -o build/emscripten-O2-scalar.js skinning_test_scalar.cpp
