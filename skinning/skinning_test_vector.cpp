@@ -146,12 +146,14 @@ void calculateVerticesAndNormals_vector(
       const float32x4 muly = position * rowy;
       const float32x4 mulz = position * rowz;
 
-      const float32x4 copylo = __builtin_shufflevector(mulx, muly, 0, 4, 1, 5);
-      const float32x4 copyhi = __builtin_shufflevector(mulx, muly, 2, 6, 3, 7);
+      float32x4 copylo = __builtin_shufflevector(mulx, muly, 0, 1, 4, 5);
+      copylo = __builtin_shufflevector(copylo, copylo, 0, 2, 1, 3);
+      float32x4 copyhi = __builtin_shufflevector(mulx, muly, 2, 3, 6, 7);
+      copyhi = __builtin_shufflevector(copyhi, copyhi, 0, 2, 1, 3);
       const float32x4 sum1 = copylo + copyhi;
 
       const float32x4 lhps = __builtin_shufflevector(mulz, sum1, 0, 1, 4, 5);
-      const float32x4 hlps = __builtin_shufflevector(sum1, mulz, 6, 7, 2, 3);
+      const float32x4 hlps = __builtin_shufflevector(mulz, sum1, 6, 7, 2, 3);
       const float32x4 sum2 = lhps + hlps;
 
       *((float32x4*)(reinterpret_cast<const float*>(output_vertex))) = __builtin_shufflevector(sum2, sum2, 2, 3, 0, 0);
@@ -169,12 +171,14 @@ void calculateVerticesAndNormals_vector(
       const float32x4 muly = normal * rowy;
       const float32x4 mulz = normal * rowz;
 
-      const float32x4 copylo = __builtin_shufflevector(mulx, muly, 0, 4, 1, 5);
-      const float32x4 copyhi = __builtin_shufflevector(mulx, muly, 2, 6, 3, 7);
+      float32x4 copylo = __builtin_shufflevector(mulx, muly, 0, 1, 4, 5);
+      copylo = __builtin_shufflevector(copylo, copylo, 0, 2, 1, 3);
+      float32x4 copyhi = __builtin_shufflevector(mulx, muly, 2, 3, 6, 7);
+      copyhi = __builtin_shufflevector(copyhi, copyhi, 0, 2, 1, 3);
       const float32x4 sum1 = copylo + copyhi;
 
       const float32x4 lhps = __builtin_shufflevector(mulz, sum1, 0, 1, 4, 5);
-      const float32x4 hlps = __builtin_shufflevector(sum1, mulz, 6, 7, 2, 3);
+      const float32x4 hlps = __builtin_shufflevector(mulz, sum1, 2, 3, 6, 7);
       const float32x4 sum2 = lhps + hlps;
 
       *((float32x4*)(reinterpret_cast<const float*>(&output_vertex[1]))) = __builtin_shufflevector(sum2, sum2, 2, 3, 0, 0);
