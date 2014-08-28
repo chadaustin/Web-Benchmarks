@@ -47,3 +47,12 @@ $EMCC $EMFLAGS -O1 -o build/emscripten-O1-scalar.html skinning_test_scalar.cpp
 $EMCC $EMFLAGS -O2 -o build/emscripten-O2-scalar.html skinning_test_scalar.cpp
 $EMCC $EMFLAGS -O3 -o build/emscripten-O3-scalar.html skinning_test_scalar.cpp
 
+$EMCC $EMFLAGS -O0 -o build/emscripten-O0-vector.js skinning_test_vector.cpp
+$EMCC $EMFLAGS -O1 -o build/emscripten-O1-vector.js skinning_test_vector.cpp
+$EMCC $EMFLAGS -O2 -o build/emscripten-O2-vector.js skinning_test_vector.cpp
+$EMCC $EMFLAGS -O3 -o build/emscripten-O3-vector.js skinning_test_vector.cpp
+
+$EMCC $EMFLAGS -O0 -o build/emscripten-O0-vector.html skinning_test_vector.cpp
+$EMCC $EMFLAGS -O1 -o build/emscripten-O1-vector.html skinning_test_vector.cpp
+$EMCC $EMFLAGS -O2 -o build/emscripten-O2-vector.html skinning_test_vector.cpp
+$EMCC $EMFLAGS -O3 -o build/emscripten-O3-vector.html skinning_test_vector.cpp
