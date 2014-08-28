@@ -4,8 +4,8 @@ cd `dirname "$0"`
 mkdir -p build
 
 GCC=g++
-CLANG=clang
-EMCC=../../emscripten/emcc
+CLANG=${LLVM}/clang
+EMCC=${EMSCRIPTEN}/emcc
 
 CFLAGS="-Wall -Werror"
 EMFLAGS="-fno-exceptions -s DISABLE_EXCEPTION_CATCHING=1 -s ASM_JS=1 --llvm-lto 1"
