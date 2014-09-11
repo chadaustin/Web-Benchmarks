@@ -65,9 +65,9 @@ struct CalPoint4 : CalBase4 {
   }
 
   void setAsPoint(float x, float y, float z) {
-    x = this->x;
-    y = this->y;
-    z = this->z;
+    this->x = x;
+    this->y = y;
+    this->z = z;
     w = 1.0f;
   }
 };
