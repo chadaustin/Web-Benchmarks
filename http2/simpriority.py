@@ -15,38 +15,63 @@ def IDGetter():
 getID = IDGetter()
 
 class H2Stream:
-    def __init__(self, onComplete):
+    def __init__(self, url, onComplete):
+        self.url = url
         self.onComplete = onComplete
 
         self.id = getID()
 
-        self.parent = None
-        self.children = []
+        self.parent = 0
+        self.children = set()
 
 class H2Connection:
     def __init__(self, clock):
         self.clock = clock
-        self.root = # highest-priority stream
+
+        self.liveStreams = {} # ID -> H2Stream
+        self.roots = set()
+
+    def openStream(self, url, dependency, onComplete):
+        stream = H2Stream(url, onComplete)
+
+        if dependency:
+            self.liveStreams[dependency].children.add(stream)
+            stream.parent = self.liveStreams[dependency]
+        else:
+            self.roots.add(stream)
+            stream.parent = 0
+        
+        self.liveStreams[stream.id] = stream
+
+        return stream.id
+
+    def simulate(self):
+        current = self.roots
+        while current:
+            yield {f.url for f in current}
+
+            next = set()
+            for f in current:
+                next.update(f.children)
+            current = next
+
+class Prioritizer:
+    def __init__(self, connection):
+        self.connection = connection
+
         self.byPriority = {} # priority -> [stream]
 
     def request(self, url, priority, onComplete):
+        
+        
+        self.connection.request(url, parentID, onComplete)
+
         priorities = sort(self.byPriority.keys())
 
         if priority > max(priority):
             self.roots
 
-        stream = H2Stream(onComplete)
-        
-        
         #self.byPriority = 
-
-        print('request', url)
-
-    def simulate(self):
-        pass
-
-class Prioritizer:
-    
 
 def after(cb, N):
     assert N
