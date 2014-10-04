@@ -5,80 +5,53 @@ class Clock:
     def advance(self, elapsed):
         self.time += elapsed
 
-def IDGetter():
-    id = 0
-    def getID():
-        nonlocal id
-        id += 1
-        return id
-    return getID
-getID = IDGetter()
-
-class H2Stream:
-    def __init__(self, url, onComplete):
-        self.url = url
-        self.onComplete = onComplete
-
-        self.id = getID()
-
-        self.parent = 0
-        self.children = set()
-
 class H2Connection:
     def __init__(self, clock):
         self.clock = clock
 
-        self.liveStreams = {} # ID -> H2Stream
-        self.roots = set()
+        self.currentID = 0
+        self.data = {0: None}      # ID -> (URL, onComplete)
+        self.children = {0: set()} # ID -> set<ID>
+        self.parent = {0: None}    # ID -> ID
 
-    def openStream(self, url, dependency, onComplete):
-        stream = H2Stream(url, onComplete)
-        self.liveStreams[stream.id] = stream
+    def openStream(self, url, parent, onComplete):
+        self.currentID += 1
+        stream = self.currentID
 
-        if dependency:
-            self.liveStreams[dependency].children.add(stream)
-            stream.parent = self.liveStreams[dependency]
-        else:
-            self.roots.add(stream)
-            stream.parent = None
-        
-        return stream.id
+        assert parent in self.data
 
-    def setPriority(self, streamID, parentID):
-        stream = self.liveStreams[streamID]
-        parent = self.liveStreams[parentID] if parentID else None
+        self.data[stream] = (url, onComplete)
+        self.children[stream] = set()
+        self.parent[stream] = parent
+        self.children[parent].add(stream)
 
+        return stream
+
+    def setPriority(self, stream, parent):
+        # O(depth)
         cycle = False
         cursor = parent
         while cursor:
             if cursor == stream:
                 cycle = True
                 break
-            cursor = cursor.parent
+            cursor = self.parent[cursor]
         
         if cycle:
-            self.setPriority(parentID, stream.parent.id if stream.parent else 0)
+            self.setPriority(parent, self.parent[stream])
 
-        if stream.parent:
-            stream.parent.children.remove(stream)
-        else:
-            self.roots.remove(stream)
-
-        if parent:
-            parent.children.add(stream)
-            stream.parent = parent
-        else:
-            self.roots.add(stream)
-            stream.parent = None
+        self.children[self.parent[stream]].remove(stream)
+        self.children[parent].add(stream)
+        self.parent[stream] = parent
 
     def simulate(self):
-        current = self.roots
+        current = self.children[0]
         while current:
-            yield {f.url for f in current}
+            yield {self.data[f][0] for f in current}
 
             next = set()
             for f in current:
-                next.update(f.children)
+                next.update(self.children[f])
             current = next
 
 class Prioritizer:
