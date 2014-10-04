@@ -33,17 +33,43 @@ class H2Connection:
 
     def openStream(self, url, dependency, onComplete):
         stream = H2Stream(url, onComplete)
+        self.liveStreams[stream.id] = stream
 
         if dependency:
             self.liveStreams[dependency].children.add(stream)
             stream.parent = self.liveStreams[dependency]
         else:
             self.roots.add(stream)
-            stream.parent = 0
+            stream.parent = None
         
-        self.liveStreams[stream.id] = stream
-
         return stream.id
+
+    def setPriority(self, streamID, parentID):
+        stream = self.liveStreams[streamID]
+        parent = self.liveStreams[parentID] if parentID else None
+
+        cycle = False
+        cursor = parent
+        while cursor:
+            if cursor == stream:
+                cycle = True
+                break
+            cursor = cursor.parent
+        
+        if cycle:
+            self.setPriority(parentID, stream.parent.id if stream.parent else 0)
+
+        if stream.parent:
+            stream.parent.children.remove(stream)
+        else:
+            self.roots.remove(stream)
+
+        if parent:
+            parent.children.add(stream)
+            stream.parent = parent
+        else:
+            self.roots.add(stream)
+            stream.parent = None
 
     def simulate(self):
         current = self.roots
