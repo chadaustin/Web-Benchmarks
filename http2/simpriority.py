@@ -138,8 +138,8 @@ def main():
     loadObject(prio, 'room', 90, cb1, cb2)
     loadObject(prio, 'me', 90, cb1, cb2)
     for i in range(10, 20):
-        loadObject(prio, 'avatar', i, cb1, cb2)
-        loadObject(prio, 'room', i, cb1, cb2)
+        loadObject(prio, 'avatar' + str(i), i, cb1, cb2)
+        loadObject(prio, 'room' + str(i), i, cb1, cb2)
 
     def pp(s):
         return ','.join(s)
