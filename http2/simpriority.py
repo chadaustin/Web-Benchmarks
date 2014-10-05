@@ -1,3 +1,5 @@
+import bisect
+
 class Clock:
     def __init__(self):
         self.time = 0
@@ -54,6 +56,8 @@ class H2Connection:
     def simulate(self):
         current = self.children[0]
         while current:
+            for f in current:
+                self.data[f][1]()
             yield {self.data[f][0] for f in current}
 
             next = set()
@@ -65,25 +69,25 @@ class Prioritizer:
     def __init__(self, connection):
         self.connection = connection
 
-        # priority -> [stream]
         # every entry in stream has the previous entry as a dependency
-        self.byPriority = {}
+        self.streams = []
+        self.priorities = []
 
     def request(self, url, priority, onComplete):
-        priorities = sorted(self.byPriority.keys())
+        # this algorithm is O(n) as written but could be implemented
+        # in O(lg N) with a balancing tree
 
-        if not priorities:
-            parent = 0
-            #exclusive = DontMatter
-        elif priority > max(priorities):
-            parent = 0
-            #exclusive = True
-        else:
-            #parent = last entry of previous priority level
-            #eexclui
-            pass
-        
-        stream = self.connection.openStream(url, parent, onComplete)
+        priority = -priority # bisect doesn't support using custom comparisons
+
+        index = bisect.bisect(self.priorities, priority)
+        self.streams.insert(
+            index,
+            self.connection.openStream(
+                url,
+                parent=self.streams[index - 1] if index else 0,
+                exclusive=True,
+                onComplete=onComplete))
+        self.priorities.insert(index, priority)
 
 def after(cb, N):
     assert N
@@ -101,7 +105,7 @@ def loadObject(connection, url, priorityModifier, onInitialLoad, onCompleteLoad)
         cb2 = after(onCompleteLoad, 11)
         # hires textures
         for i in range(10):
-            connection.request('hires' + str(i), 0 + priorityModifier, cb2)
+            connection.request(url + '+hires' + str(i), 0 + priorityModifier, cb2)
 
         # meshes
         def objectVisible():
@@ -110,9 +114,9 @@ def loadObject(connection, url, priorityModifier, onInitialLoad, onCompleteLoad)
 
         cb1 = after(objectVisible, 20)
         for i in range(10):
-            connection.request('mesh' + str(i), 100 + priorityModifier, cb1)
+            connection.request(url + '+mesh' + str(i), 100 + priorityModifier, cb1)
         for i in range(10):
-            connection.request('lores' + str(i), 100 + priorityModifier, cb1)
+            connection.request(url + '+lores' + str(i), 100 + priorityModifier, cb1)
 
     connection.request(url, 200 + priorityModifier, loadAssets)
 
@@ -137,7 +141,9 @@ def main():
         loadObject(prio, 'avatar', i, cb1, cb2)
         loadObject(prio, 'room', i, cb1, cb2)
 
-    c.simulate()
+    def pp(s):
+        return ','.join(s)
+    print(', '.join(map(pp, conn.simulate())))
 
 if __name__ == '__main__':
     main()
