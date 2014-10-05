@@ -13,20 +13,23 @@ class H2Connection:
         self.children = [set()] # ID -> set<ID>
         self.parent = [None]    # ID -> ID
 
-    def openStream(self, url, parent, onComplete):
+    def openStream(self, url, parent, exclusive, onComplete):
         stream = len(self.data)
 
         assert parent < stream
 
         self.data.append((url, onComplete))
-        self.children.append(set())
         self.parent.append(parent)
-
-        self.children[parent].add(stream)
+        if exclusive:
+            self.children.append(self.children[parent])
+            self.children[parent] = {stream}
+        else:
+            self.children.append(set())
+            self.children[parent].add(stream)
 
         return stream
 
-    def setPriority(self, stream, parent):
+    def setPriority(self, stream, parent, exclusive=False):
         # O(depth)
         cycle = False
         cursor = parent
@@ -41,7 +44,12 @@ class H2Connection:
 
         self.children[self.parent[stream]].remove(stream)
         self.parent[stream] = parent
-        self.children[parent].add(stream)
+
+        if exclusive:
+            self.children[stream].update(self.children[parent])
+            self.children[parent] = {stream}
+        else:
+            self.children[parent].add(stream)
 
     def simulate(self):
         current = self.children[0]

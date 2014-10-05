@@ -9,8 +9,8 @@ class H2ConnectionTests(unittest.TestCase):
     def trace(self, name):
         return lambda: self.log.append(name)
 
-    def openStream(self, url, dependency):
-        return self.conn.openStream(url, dependency, self.trace(url))
+    def openStream(self, url, dependency, exclusive=False):
+        return self.conn.openStream(url, dependency, exclusive=exclusive, onComplete=self.trace(url))
 
     def test_simulate_breadth_first(self):
         a = self.openStream('a', 0)
@@ -64,6 +64,24 @@ class H2ConnectionTests(unittest.TestCase):
         c = self.openStream('c', b)
 
         self.conn.setPriority(b, c)
+
+        log = list(self.conn.simulate())
+        self.assertEqual([{'a'}, {'c'}, {'b'}], log)
+
+    def test_exclusive(self):
+        a = self.openStream('a', 0)
+        b = self.openStream('b', 0)
+        c = self.openStream('c', 0, exclusive=True)
+
+        log = list(self.conn.simulate())
+        self.assertEqual([{'c'}, {'a', 'b'}], log)
+
+    def test_exclusive(self):
+        a = self.openStream('a', 0)
+        b = self.openStream('b', a)
+        c = self.openStream('c', b)
+
+        self.conn.setPriority(c, a, exclusive=True)
 
         log = list(self.conn.simulate())
         self.assertEqual([{'a'}, {'c'}, {'b'}], log)
