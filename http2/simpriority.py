@@ -9,20 +9,19 @@ class H2Connection:
     def __init__(self, clock):
         self.clock = clock
 
-        self.currentID = 0
-        self.data = {0: None}      # ID -> (URL, onComplete)
-        self.children = {0: set()} # ID -> set<ID>
-        self.parent = {0: None}    # ID -> ID
+        self.data = [None]      # (URL, onComplete)
+        self.children = [set()] # ID -> set<ID>
+        self.parent = [None]    # ID -> ID
 
     def openStream(self, url, parent, onComplete):
-        self.currentID += 1
-        stream = self.currentID
+        stream = len(self.data)
 
-        assert parent in self.data
+        assert parent < stream
 
-        self.data[stream] = (url, onComplete)
-        self.children[stream] = set()
-        self.parent[stream] = parent
+        self.data.append((url, onComplete))
+        self.children.append(set())
+        self.parent.append(parent)
+
         self.children[parent].add(stream)
 
         return stream
@@ -41,8 +40,8 @@ class H2Connection:
             self.setPriority(parent, self.parent[stream])
 
         self.children[self.parent[stream]].remove(stream)
-        self.children[parent].add(stream)
         self.parent[stream] = parent
+        self.children[parent].add(stream)
 
     def simulate(self):
         current = self.children[0]
@@ -58,19 +57,25 @@ class Prioritizer:
     def __init__(self, connection):
         self.connection = connection
 
-        self.byPriority = {} # priority -> [stream]
+        # priority -> [stream]
+        # every entry in stream has the previous entry as a dependency
+        self.byPriority = {}
 
     def request(self, url, priority, onComplete):
+        priorities = sorted(self.byPriority.keys())
+
+        if not priorities:
+            parent = 0
+            #exclusive = DontMatter
+        elif priority > max(priorities):
+            parent = 0
+            #exclusive = True
+        else:
+            #parent = last entry of previous priority level
+            #eexclui
+            pass
         
-        
-        self.connection.request(url, parentID, onComplete)
-
-        priorities = sort(self.byPriority.keys())
-
-        if priority > max(priority):
-            self.roots
-
-        #self.byPriority = 
+        stream = self.connection.openStream(url, parent, onComplete)
 
 def after(cb, N):
     assert N

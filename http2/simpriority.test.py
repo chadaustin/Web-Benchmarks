@@ -68,5 +68,30 @@ class H2ConnectionTests(unittest.TestCase):
         log = list(self.conn.simulate())
         self.assertEqual([{'a'}, {'c'}, {'b'}], log)
 
+class DisabledSuite:
+#class PrioritizerTests(unittest.TestCase):
+    def setUp(self):
+        self.conn = simpriority.H2Connection(None)
+        self.prio = simpriority.Prioritizer(self.conn)
+
+    def request(self, url, priority):
+        self.prio.request(url, priority, lambda: None)
+
+    def test_in_request_order(self):
+        self.request('a', 0)
+        self.request('b', 0)
+        self.request('c', 0)
+
+        log = list(self.conn.simulate())
+        self.assertEqual([{'a'}, {'c'}, {'b'}], log)
+
+    def test_in_priority_order(self):
+        self.request('a', 0)
+        self.request('b', 1)
+        self.request('c', 2)
+
+        log = list(self.conn.simulate())
+        self.assertEqual([{'c'}, {'b'}, {'a'}], log)
+
 if __name__ == '__main__':
     unittest.main()
