@@ -2,6 +2,9 @@
 
 set -e
 
-EMCC_FAST_COMPILER=1 ~/imvu/emscripten/emcc -fno-threadsafe-statics -O2 -g3 --bind -s EXPORTED_FUNCTIONS='["_main"]' -s ASM_JS=1 --pre-js pre.js --post-js post.js -o bench.js bench.cpp &
-EMCC_FAST_COMPILER=1 ~/imvu/emscripten/emcc -fno-threadsafe-statics -O2 -g3 --bind -s EXPORTED_FUNCTIONS='["_main"]' -s ASM_JS=1 --pre-js pre.js --post-js post.js -o benchpage.html bench.cpp &
-wait
+#EMCC_FAST_COMPILER=0 ~/projects/emscripten/emcc -fno-threadsafe-statics -s ASM_JS=1 -O2 -g3 --bind -s EXPORTED_FUNCTIONS='["_main"]' --pre-js pre.js --post-js post.js -o bench.js bench.cpp
+#EMCC_FAST_COMPILER=0 ~/projects/emscripten/emcc -fno-threadsafe-statics -s ASM_JS=1 -O2 -g3 --bind -s EXPORTED_FUNCTIONS='["_main"]' --pre-js pre.js --post-js post.js -o benchpage.html bench.cpp
+
+EMCC_FAST_COMPILER=1 ~/projects/emscripten/emcc -fno-threadsafe-statics --memory-init-file 0 -O2 -g3 --bind -o call_overhead_embind.js call_overhead_embind.cpp
+
+
