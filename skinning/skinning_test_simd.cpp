@@ -162,7 +162,12 @@ void calculateVerticesAndNormals_SSE_intrinsics(
       _mm_storeh_pi((__m64*)output_vertex, sum2);
 
       __m128 sum3 = _mm_shuffle_ps(sum2, sum2, _MM_SHUFFLE(1, 1, 1, 1));
+#ifdef __EMSCRIPTEN__
+      // emscripten simulates _mm_add_ss with a SIMD.float32x4.shuffle and a SIMD.float32x4.add
+      sum3 = _mm_add_ps(sum2, sum3);
+#else
       sum3 = _mm_add_ss(sum2, sum3);
+#endif
       _mm_store_ss(&output_vertex->z, sum3);
     }
 
@@ -185,7 +190,12 @@ void calculateVerticesAndNormals_SSE_intrinsics(
       _mm_storeh_pi((__m64*)&output_vertex[1], sum2);
 
       __m128 sum3 = _mm_shuffle_ps(sum2, sum2, _MM_SHUFFLE(1, 1, 1, 1));
+#ifdef __EMSCRIPTEN__
+      // emscripten simulates _mm_add_ss with a SIMD.float32x4.shuffle and a SIMD.float32x4.add
+      sum3 = _mm_add_ps(sum2, sum3);
+#else
       sum3 = _mm_add_ss(sum2, sum3);
+#endif
       _mm_store_ss(&output_vertex[1].z, sum3);
     }
 
