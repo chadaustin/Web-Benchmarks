@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013 Chad Austin
+ * Copyright (c) 2012, 2013, 2014 Chad Austin
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -31,6 +31,8 @@
 #include <limits.h>
 #include <ostream>
 #include <algorithm>
+#include <cstdio>
+#include <limits>
 
 #include <string> // for error messages.  kill someday?
 
@@ -122,6 +124,52 @@ namespace sajson {
         {}
     };
 
+    struct object_key_record
+    {
+        size_t key_start;
+        size_t key_end;
+        size_t value;
+    };
+
+    struct object_key_comparator
+    {
+        object_key_comparator(const char* object_data)
+            : data(object_data)
+        {
+        }
+
+        bool operator()(const object_key_record& lhs, const string& rhs) const {
+            const size_t lhs_length = lhs.key_end - lhs.key_start;
+            const size_t rhs_length = rhs.length();
+            if (lhs_length < rhs_length) {
+                return true;
+            } else if (lhs_length > rhs_length) {
+                return false;
+            }
+            return memcmp(data + lhs.key_start, rhs.data(), lhs_length) < 0;
+        }
+
+        bool operator()(const string& lhs, const object_key_record& rhs) const {
+            return !(*this)(rhs, lhs);
+        }
+
+        bool operator()(const object_key_record& lhs, const
+                object_key_record& rhs)
+        {
+            const size_t lhs_length = lhs.key_end - lhs.key_start;
+            const size_t rhs_length = rhs.key_end - rhs.key_start;
+            if (lhs_length < rhs_length) {
+                return true;
+            } else if (lhs_length > rhs_length) {
+                return false;
+            }
+            return memcmp(data + lhs.key_start, data + rhs.key_start,
+                    lhs_length) < 0;
+        }
+
+        const char* data;
+    };
+
     class refcount {
     public:
         refcount()
@@ -147,7 +195,7 @@ namespace sajson {
     private:
         size_t* pn;
 
-        refcount& operator=(const refcount&);
+        refcount& operator=(const refcount&) = delete;
     };
 
     class mutable_string_view {
@@ -249,29 +297,47 @@ namespace sajson {
 
         // valid iff get_type() is TYPE_ARRAY or TYPE_OBJECT
         size_t get_length() const {
+            assert_type_2(TYPE_ARRAY, TYPE_OBJECT);
             return payload[0];
         }
 
         // valid iff get_type() is TYPE_ARRAY
         value get_array_element(size_t index) const {
+            assert_type(TYPE_ARRAY);
             size_t element = payload[1 + index];
             return value(get_element_type(element), payload + get_element_value(element), text);
         }
 
         // valid iff get_type() is TYPE_OBJECT
         string get_object_key(size_t index) const {
+            assert_type(TYPE_OBJECT);
             const size_t* s = payload + 1 + index * 3;
             return string(text + s[0], s[1] - s[0]);
         }
 
         // valid iff get_type() is TYPE_OBJECT
         value get_object_value(size_t index) const {
+            assert_type(TYPE_OBJECT);
             size_t element = payload[3 + index * 3];
             return value(get_element_type(element), payload + get_element_value(element), text);
         }
 
+
+        // valid iff get_type() is TYPE_OBJECT
+        // return get_length() if there is no such key
+        size_t find_object_key(const string& key) const {
+            assert_type(TYPE_OBJECT);
+            const object_key_record* start = reinterpret_cast<const object_key_record*>(payload + 1);
+            const object_key_record* end = start + get_length();
+            const object_key_record* i = std::lower_bound(start, end, key, object_key_comparator(text));
+            return (i != end
+                    && (i->key_end - i->key_start) == key.length()
+                    && memcmp(key.data(), text + i->key_start, key.length()) == 0)? i - start : get_length();
+        }
+
         // valid iff get_type() is TYPE_INTEGER
         int get_integer_value() const {
+            assert_type(TYPE_INTEGER);
             integer_storage s;
             s.u = payload[0];
             return s.i;
@@ -279,11 +345,13 @@ namespace sajson {
 
         // valid iff get_type() is TYPE_DOUBLE
         double get_double_value() const {
+            assert_type(TYPE_DOUBLE);
             return double_storage::load(payload);
         }
 
         // valid iff get_type() is TYPE_INTEGER or TYPE_DOUBLE
         double get_number_value() const {
+            assert_type_2(TYPE_INTEGER, TYPE_DOUBLE);
             if (get_type() == TYPE_INTEGER) {
                 return get_integer_value();
             } else {
@@ -293,18 +361,29 @@ namespace sajson {
 
         // valid iff get_type() is TYPE_STRING
         size_t get_string_length() const {
+            assert_type(TYPE_STRING);
             return payload[1] - payload[0];
         }
 
         // valid iff get_type() is TYPE_STRING
         std::string as_string() const {
+            assert_type(TYPE_STRING);
             return std::string(text + payload[0], text + payload[1]);
         }
 
     private:
+        void assert_type(type expected) const {
+            assert(expected == get_type());
+        }
+
+        void assert_type_2(type e1, type e2) const {
+            assert(e1 == get_type() || e2 == get_type());
+        }
+
         const type value_type;
         const size_t* const payload;
         const char* const text;
+
     };
 
     class document {
@@ -318,6 +397,22 @@ namespace sajson {
             , error_column(error_column)
             , error_message(error_message)
         {}
+
+        document(const document&) = delete;
+        void operator=(const document&) = delete;
+
+        document(document&& rhs)
+            : input(rhs.input)
+            , structure(rhs.structure)
+            , root_type(rhs.root_type)
+            , root(rhs.root)
+            , error_line(rhs.error_line)
+            , error_column(rhs.error_column)
+            , error_message(rhs.error_message)
+        {
+            rhs.structure = 0;
+            // should rhs's fields be zeroed too?
+        }
 
         ~document() {
             delete[] structure;
@@ -345,7 +440,7 @@ namespace sajson {
 
     private:
         mutable_string_view input;
-        const size_t* const structure;
+        const size_t* structure;
         const type root_type;
         const size_t* const root;
         const size_t error_line;
@@ -472,6 +567,9 @@ namespace sajson {
                         return error("object key must be quoted");
                     }
                     result = parse_string(temp);
+                    if (!result) {
+                        return error("invalid object key");
+                    }
                     if (peek_structure() != ':') {
                         return error("expected :");
                     }
@@ -555,7 +653,6 @@ namespace sajson {
                         break;
                     }
                     default:
-                        printf("%c\n", *p);
                         return error("cannot parse unknown value");
                 }
 
@@ -807,7 +904,6 @@ namespace sajson {
                     i = -i;
                 }
             }
-
             if (try_double) {
                 out -= double_storage::word_length;
                 double_storage::store(out, d);
@@ -833,40 +929,13 @@ namespace sajson {
             return TYPE_ARRAY;
         }
 
-        struct ObjectItemRecord {
-            size_t key_start;
-            size_t key_end;
-            size_t value;
-        };
-
-        struct ObjectItemRecordComparator {
-            ObjectItemRecordComparator(const char* input)
-                : input(input)
-            {}
-
-            bool operator()(const ObjectItemRecord& left, const ObjectItemRecord& right) const {
-                size_t left_length = left.key_end - left.key_start;
-                size_t right_length = right.key_end - right.key_start;
-                if (left_length < right_length) {
-                    return true;
-                } else if (left_length > right_length) {
-                    return false;
-                } else {
-                    return memcmp(input + left.key_start, input + right.key_start, left_length) < 0;
-                }
-            }
-
-        private:
-            const char* input;
-        };
-
         parse_result install_object(size_t* object_base) {
             const size_t length = (temp - object_base) / 3;
-            ObjectItemRecord* oir = reinterpret_cast<ObjectItemRecord*>(object_base);
+            object_key_record* oir = reinterpret_cast<object_key_record*>(object_base);
             std::sort(
                 oir,
                 oir + length,
-                ObjectItemRecordComparator(input.get_data()));
+                object_key_comparator(input.get_data()));
 
             size_t* const new_base = out - length * 3 - 1;
             size_t i = length;
