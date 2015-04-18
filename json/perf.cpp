@@ -424,7 +424,10 @@ namespace sajson_test {
         Copy data(file);
         const auto& document = sajson::parse(sajson::string(data.get(), file.length));
         if (!document.is_valid()) {
-            fprintf(stderr, "sajson parse error: %s\n", document.get_error_message().c_str());
+            fprintf(stderr, "sajson parse error (%d,%d): %s\n",
+                    static_cast<int>(document.get_error_line()),
+                    static_cast<int>(document.get_error_column()),
+                    document.get_error_message().c_str());
             abort();
         }
 
@@ -448,6 +451,7 @@ TestImplementation test_implementations[] = {
 };
 
 const char* benchmark_files[] = {
+    "testdata/twitter.json",
     "testdata/apache_builds.json",
     "testdata/github_events.json",
     "testdata/instruments.json",
@@ -474,7 +478,10 @@ void benchmark(const char* filename) {
     std::vector<char> contents(length);
 
     fseek(fh, 0, SEEK_SET);
-    fread(&contents[0], 1, length, fh);
+    if (length != fread(&contents[0], 1, length, fh)) {
+        fprintf(stderr, "Failed to read file\n");
+        abort();
+    }
     fclose(fh);
 
     TestFile file = { filename, length, reinterpret_cast<unsigned char*>(&contents[0]) };

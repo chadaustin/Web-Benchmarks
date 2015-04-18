@@ -23,12 +23,10 @@ def jansson(env):
 
 env = Environment(
     ENV=os.environ,
-    CC='clang-mp-3.1',
-    CXX='clang++-mp-3.1',
     CCFLAGS=['-g', '-O2', '-fno-exceptions'],
     LINKFLAGS=['-O2'],
     CPPDEFINES=['NDEBUG'],
-    CXXFLAGS=['-std=c++0x', '-Wall', '-Werror'])
+    CXXFLAGS=['-std=c++0x', '-Wall'])
 rapidjson(env)
 yajl(env)
 vjson(env)
