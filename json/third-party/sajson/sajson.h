@@ -323,6 +323,13 @@ namespace sajson {
             return value(get_element_type(element), payload + get_element_value(element), text);
         }
 
+        // valid iff get_type() is TYPE_OBJECT
+        value get_value_of_key(const string& key) const {
+            assert_type(TYPE_OBJECT);
+            size_t i = find_object_key(key);
+            assert_in_bounds(i);
+            return get_object_value(i);
+        }
 
         // valid iff get_type() is TYPE_OBJECT
         // return get_length() if there is no such key
@@ -379,6 +386,10 @@ namespace sajson {
 
         void assert_type_2(type e1, type e2) const {
             assert(e1 == get_type() || e2 == get_type());
+        }
+
+        void assert_in_bounds(size_t i) const {
+            assert(i < get_length());
         }
 
         const type value_type;
@@ -579,17 +590,22 @@ namespace sajson {
             parse_result result = error_result();
             
             for (;;) {
-                char closing_bracket = (current_structure_type == TYPE_OBJECT ? '}' : ']');
+                const char closing_bracket = (current_structure_type == TYPE_OBJECT ? '}' : ']');
+                const bool is_first_element = temp == current_base + 1;
+                bool had_comma = false;
 
                 c = peek_structure();
-                if (temp > current_base + 1) {
-                    if (c != closing_bracket) {
-                        if (c == ',') {
-                            ++p;
-                            c = peek_structure();
-                        } else {
-                            return error("expected ,");
-                        }
+                if (is_first_element) {
+                    if (c == ',') {
+                        return error("unexpected comma");
+                    }
+                } else {
+                    if (c == ',') {
+                        ++p;
+                        c = peek_structure();
+                        had_comma = true;
+                    } else if (c != closing_bracket) {
+                        return error("expected ,");
                     }
                 }
 
@@ -670,6 +686,9 @@ namespace sajson {
                             return error("expected ]");
                         }
                     pop: {
+                        if (had_comma) {
+                            return error("trailing commas not allowed");
+                        }
                         ++p;
                         size_t element = *current_base;
                         result = (this->*structure_installer)(current_base + 1);
@@ -683,6 +702,8 @@ namespace sajson {
                         current_structure_type = get_element_type(element);
                         break;
                     }
+                    case ',':
+                        return error("unexpected comma");
                     default:
                         return error("cannot parse unknown value");
                 }
@@ -830,14 +851,16 @@ namespace sajson {
 
             int i = 0;
             double d = 0.0; // gcc complains that d might be used uninitialized which isn't true. appease the warning anyway.
-            for (;;) {
+            if (*p == '0') {
+                ++p;
+            } else for (;;) {
                 char c = *p;
                 if (c < '0' || c > '9') {
                     break;
                 }
                 
                 ++p;
-                if (at_eof()) {
+                if (SAJSON_UNLIKELY(at_eof())) {
                     return error("unexpected end of input");
                 }
 
@@ -894,8 +917,8 @@ namespace sajson {
 
                 bool negativeExponent = false;
                 if ('-' == *p) {
-                    ++p;
                     negativeExponent = true;
+                    ++p;
                     if (at_eof()) {
                         return error("unexpected end of input");
                     }
@@ -907,18 +930,23 @@ namespace sajson {
                 }
 
                 int exp = 0;
+
+                char c = *p;
+                if (SAJSON_UNLIKELY(c < '0' || c > '9')) {
+                    return error("missing exponent");
+                }
                 for (;;) {
-                    char c = *p;
-                    if (c < '0' || c > '9') {
-                        break;
-                    }
+                    exp = 10 * exp + (c - '0');
 
                     ++p;
                     if (at_eof()) {
                         return error("unexpected end of input");
                     }
 
-                    exp = 10 * exp + (c - '0');
+                    c = *p;
+                    if (c < '0' || c > '9') {
+                        break;
+                    }
                 }
                 exponent += (negativeExponent ? -exp : exp);
             }
