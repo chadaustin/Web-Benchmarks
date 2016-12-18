@@ -21,8 +21,14 @@ def jansson(env):
     env.AppendUnique(
         CPPPATH=['third-party/jansson-2.4/src'])
 
+def pjson(env):
+    env.AppendUnique(
+        CPPPATH=['third-party/pjson'])
+
 env = Environment(
     ENV=os.environ,
+    CC='clang-3.5',
+    CXX='clang++-3.5',
     CCFLAGS=['-g', '-O2', '-fno-exceptions'],
     LINKFLAGS=['-O2'],
     CPPDEFINES=['NDEBUG'],
@@ -32,5 +38,6 @@ yajl(env)
 vjson(env)
 sajson(env)
 jansson(env)
+pjson(env)
 
 env.Program('perf', ['perf.cpp', 'libyajl.c', 'libjansson.c', 'libvjson.cpp'])

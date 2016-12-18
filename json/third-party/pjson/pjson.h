@@ -10,11 +10,16 @@
 #include <vector>
 #include <limits>
 #include <assert.h>
+#include <stddef.h>
 
 // ---- Macros
 
 #define PJSON_ASSERT assert
+#ifdef _MSC_VER
 #define PJSON_FORCEINLINE __forceinline
+#else
+#define PJSON_FORCEINLINE __attribute__((always_inline))
+#endif
 
 #define PJSON_PARSE_STATS 0
 
@@ -32,8 +37,9 @@ namespace pjson
    typedef unsigned int uint;
    typedef signed int int32;
    typedef unsigned int uint32;
-   typedef signed __int64 int64;
-   typedef unsigned __int64 uint64;
+
+   typedef int64_t int64;
+   typedef uint64_t uint64;
 
    class document;
    class value_variant;
@@ -55,7 +61,11 @@ namespace pjson
    inline bool is_power_of_2(uint32 x) { return x && ((x & (x - 1U)) == 0U); }
    inline uint32 next_pow2(uint32 val) { val--; val |= val >> 16; val |= val >> 8; val |= val >> 4; val |= val >> 2; val |= val >> 1; return val + 1; }
 
+#ifdef _MSC_VER
    inline int pjson_stricmp(const char* p, const char* q) { return _stricmp(p, q); }
+#else
+   inline int pjson_stricmp(const char* p, const char* q) { return strcasecmp(p, q); }
+#endif
 
    // ---- Global Arrays
 
@@ -132,8 +142,8 @@ namespace pjson
          m_total_free_bytes(0),
          m_initial_size(initial_size), 
          m_min_chunk_size(min_chunk_size),
-         m_cur_grow_size(min_chunk_size),
-         m_max_to_preserve_across_resets(max_bytes_to_preserve_across_resets)
+         m_max_to_preserve_across_resets(max_bytes_to_preserve_across_resets),
+         m_cur_grow_size(min_chunk_size)
       { 
          if (initial_size)
          {
@@ -359,14 +369,14 @@ namespace pjson
    template<typename T>
    struct simple_vector_default_copy_construction_policy
    {
-      inline static void copy_construct(void *pDst, const T& init, pool_allocator& alloc) { alloc; new (pDst) T(init); }
-      inline static void assign(void *pDst, const T& src, pool_allocator& alloc) { alloc; *static_cast<T*>(pDst) = src; }
+       inline static void copy_construct(void *pDst, const T& init, pool_allocator& alloc) { (void)alloc; new (pDst) T(init); }
+       inline static void assign(void *pDst, const T& src, pool_allocator& alloc) { (void)alloc; *static_cast<T*>(pDst) = src; }
    };
 
    template<typename T>
    struct simple_vector_allocator_copy_construction_policy
    {
-      inline static void copy_construct(void *pDst, const T& init, pool_allocator& alloc) { alloc; new (pDst) T(init, alloc); }
+      inline static void copy_construct(void *pDst, const T& init, pool_allocator& alloc) { (void)alloc; new (pDst) T(init, alloc); }
       inline static void assign(void *pDst, const T& src, pool_allocator& alloc) { static_cast<T*>(pDst)->assign(src, alloc); }
    };
 
@@ -393,26 +403,26 @@ namespace pjson
       inline simple_vector(const simple_vector& other, pool_allocator& alloc) { construct(other, alloc); }
             
       // Manual constructor methods
-      inline void construct() { m_p = NULL; m_size = 0; }
+      inline void construct() { this->m_p = NULL; this->m_size = 0; }
       inline void construct(uint size, pool_allocator& alloc) { construct(); enlarge(size, alloc, false); }
       inline void construct(const T* p, uint size, pool_allocator& alloc)
       { 
-         m_size = size;
-         m_p = NULL;
+         this->m_size = size;
+         this->m_p = NULL;
          if (size)
          {
             uint num_bytes = sizeof(T) * size;
-            m_p = static_cast<T*>(alloc.Alloc(num_bytes));
+            this->m_p = static_cast<T*>(alloc.Alloc(num_bytes));
             if (UseConstructor)
             {
-               T* pDst = m_p;
+               T* pDst = this->m_p;
                T* pDst_end = pDst + size;
                const T* pSrc = p;
                while (pDst != pDst_end)
                   ConstructionPolicy::copy_construct(pDst++, *pSrc++, alloc);
             }
             else
-               memcpy(m_p, p, num_bytes);
+               memcpy(this->m_p, p, num_bytes);
          }
       }
       inline void construct(const simple_vector& other, pool_allocator& alloc) 
@@ -420,45 +430,45 @@ namespace pjson
          construct(other.m_p, other.m_size, alloc); 
       }
       
-      inline uint size() const { return m_size; }
-      inline uint size_in_bytes() const { return m_size * sizeof(T); }
+      inline uint size() const { return this->m_size; }
+      inline uint size_in_bytes() const { return this->m_size * sizeof(T); }
       
-      inline const T& operator[] (uint i) const  { PJSON_ASSERT(i < m_size); return m_p[i]; }
-      inline       T& operator[] (uint i)        { PJSON_ASSERT(i < m_size); return m_p[i]; }
+      inline const T& operator[] (uint i) const  { PJSON_ASSERT(i < this->m_size); return this->m_p[i]; }
+      inline       T& operator[] (uint i)        { PJSON_ASSERT(i < this->m_size); return this->m_p[i]; }
             
-      inline const T* get_ptr() const   { return m_p; }
-      inline       T* get_ptr()         { return m_p; }
+      inline const T* get_ptr() const   { return this->m_p; }
+      inline       T* get_ptr()         { return this->m_p; }
 
-      inline const T* get_ptr(const T* pDef) const   { return m_p ? m_p : pDef; }
-      inline       T* get_ptr(T* pDef)               { return m_p ? m_p : pDef; }
+      inline const T* get_ptr(const T* pDef) const   { return this->m_p ? this->m_p : pDef; }
+      inline       T* get_ptr(T* pDef)               { return this->m_p ? this->m_p : pDef; }
 
-      inline void clear() { m_p = NULL; m_size = 0; }
+      inline void clear() { this->m_p = NULL; this->m_size = 0; }
                   
       inline void resize(uint new_size, pool_allocator& alloc)
       {
-         if (new_size > m_size)
+         if (new_size > this->m_size)
          {
             grow(new_size, alloc);
             
             if (UseConstructor)
-               construct_array(m_p + m_size, new_size - m_size);
+               construct_array(this->m_p + this->m_size, new_size - this->m_size);
          }
          
-         m_size = new_size;
+         this->m_size = new_size;
       }
 
       inline void shrink(uint new_size)
       {
-         m_size = new_size;
+         this->m_size = new_size;
       }
          
       inline T* enlarge_no_construct(uint n, pool_allocator& alloc) 
       { 
          PJSON_ASSERT(n);
-         uint cur_size = m_size, new_size = m_size + n;
+         uint cur_size = this->m_size, new_size = this->m_size + n;
          grow(new_size, alloc);
-         m_size = new_size;
-         return m_p + cur_size; 
+         this->m_size = new_size;
+         return this->m_p + cur_size; 
       }
 
       inline T* enlarge(uint n, pool_allocator& alloc)
@@ -471,18 +481,18 @@ namespace pjson
 
       inline void push_back(const T& obj, pool_allocator& alloc)
       {
-         PJSON_ASSERT(!m_p || (&obj < m_p) || (&obj >= (m_p + m_size)));
-         grow(m_size + 1, alloc);
+         PJSON_ASSERT(!m_p || (&obj < this->m_p) || (&obj >= (this->m_p + this->m_size)));
+         grow(this->m_size + 1, alloc);
          if (UseConstructor)
-            ConstructionPolicy::copy_construct(m_p + m_size, obj, alloc);
+            ConstructionPolicy::copy_construct(this->m_p + this->m_size, obj, alloc);
          else
-            memcpy(m_p + m_size, &obj, sizeof(T));
-         m_size++;
+            memcpy(this->m_p + this->m_size, &obj, sizeof(T));
+         this->m_size++;
       }
 
       inline void push_back(const T* p, uint n, pool_allocator& alloc)
       {
-         PJSON_ASSERT(!m_p || ((p + n) <= m_p) || (p >= (m_p + m_size)));
+         PJSON_ASSERT(!m_p || ((p + n) <= this->m_p) || (p >= (this->m_p + this->m_size)));
          T* pDst = enlarge_no_construct(n, alloc);
          if (UseConstructor)
          {
@@ -497,21 +507,21 @@ namespace pjson
 
       inline void assign(const T* p, uint n, pool_allocator& alloc)
       {
-         PJSON_ASSERT(!m_p || ((p + n) <= m_p) || (p >= (m_p + m_size)));
+         PJSON_ASSERT(!m_p || ((p + n) <= this->m_p) || (p >= (this->m_p + this->m_size)));
          
-         const uint num_to_assign = PJSON_MIN(m_size, n);
+         const uint num_to_assign = PJSON_MIN(this->m_size, n);
          if (num_to_assign)
          {
             if (UseConstructor)
             {
                for (uint i = 0; i < num_to_assign; ++i)
-                  ConstructionPolicy::assign(&m_p[i], p[i], alloc);
+                  ConstructionPolicy::assign(&this->m_p[i], p[i], alloc);
             }
             else
-               memcpy(m_p, p, sizeof(T) * num_to_assign);
+               memcpy(this->m_p, p, sizeof(T) * num_to_assign);
          }
 
-         if (n > m_size)
+         if (n > this->m_size)
             push_back(p + num_to_assign, n - num_to_assign, alloc);
          else
             shrink(n);
@@ -524,29 +534,29 @@ namespace pjson
       
       inline void erase(uint start, uint n)
       {
-         PJSON_ASSERT((start + n) <= m_size);
-         if ((!n) || ((start + n) > m_size))
+         PJSON_ASSERT((start + n) <= this->m_size);
+         if ((!n) || ((start + n) > this->m_size))
             return;
 
-         const uint num_to_move = m_size - (start + n);
+         const uint num_to_move = this->m_size - (start + n);
 
-         T* pDst = m_p + start;
+         T* pDst = this->m_p + start;
 
-         memmove(pDst, m_p + start + n, num_to_move * sizeof(T));
+         memmove(pDst, this->m_p + start + n, num_to_move * sizeof(T));
 
-         m_size -= n;
+         this->m_size -= n;
       }
 
       inline void swap(simple_vector& other) 
       { 
-         pjson::swap(m_p, other.m_p); 
-         pjson::swap(m_size, other.m_size); 
+         pjson::swap(this->m_p, other.m_p); 
+         pjson::swap(this->m_size, other.m_size); 
       }
       
       inline void grow(uint new_size, pool_allocator& alloc)
       {
-         if (new_size > m_size)
-            m_p = static_cast<T*>(alloc.Realloc(m_p, sizeof(T) * new_size, m_size * sizeof(T)));
+         if (new_size > this->m_size)
+            this->m_p = static_cast<T*>(alloc.Realloc(this->m_p, sizeof(T) * new_size, this->m_size * sizeof(T)));
       }
    };
          
@@ -639,7 +649,7 @@ namespace pjson
       void print_escaped(const string_vec_t& str)
       {
          const char* pStr = str.m_p;
-         uint len = str.m_size; len;
+         uint len = str.m_size; (void)len;
       
          static const char* s_to_hex = "0123456789abcdef";
          print_char('\"');
@@ -1186,6 +1196,8 @@ namespace pjson
                val = (atof(get_string_ptr()) != 0.0f);
                return true;
             }
+            default:
+               break;
          }
          val = def;
          return false;
@@ -1238,6 +1250,8 @@ namespace pjson
                }
                break;
             }
+            default:
+	       break;
          }
          val = def;
          return false;
@@ -1273,6 +1287,8 @@ namespace pjson
                val = static_cast<float>(atof(get_string_ptr()));
                return true;
             }
+            default:
+	       break;          
          }
          val = def;
          return false;
@@ -1308,6 +1324,8 @@ namespace pjson
                val = atof(get_string_ptr());
                return true;
             }
+            default:
+	       break;
          }
          val = def;
          return false;
@@ -1360,8 +1378,14 @@ namespace pjson
             }
             case cJSONValueTypeDouble:
             {
+#ifdef _MSC_VER
                return 0 == _gcvt_s(pBuf, buf_size, m_data.m_flVal, 15);
+#else // TODO
+	       abort();
+#endif
             }
+            default:
+	       break;
          }
          return false;
       }

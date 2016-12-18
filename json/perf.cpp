@@ -14,6 +14,8 @@ extern "C" {
 // vjson
 #include "json.h"
 
+#include "pjson.h"
+
 // wee conflicts
 namespace jansson {
     #include <jansson.h>
@@ -436,6 +438,55 @@ namespace sajson_test {
     }
 }
 
+namespace pjson_test {
+    void traverse(jsonstats& stats, pjson::value_variant& v) {
+	if (v.is_null()) {
+	    ++stats.null_count;
+	} else if (v.is_bool()) {
+	    if (v.as_bool()) {
+		++stats.true_count;
+	    } else {
+		++stats.false_count;
+	    }
+	} else if (v.is_array()) {
+	    ++stats.array_count;
+	    auto& array = v.get_array();
+	    auto size = array.size();
+	    stats.total_array_length += size;
+	    for (pjson::uint i = 0; i < size; ++i) {
+		traverse(stats, array[i]);
+	    }
+	} else if (v.is_object()) {
+	    ++stats.object_count;
+	    auto& obj = v.get_object();
+	    auto size = obj.size();
+	    stats.total_object_length += size;
+	    for (auto i = 0u; i < size; ++i) {
+		traverse(stats, obj[i].get_value());
+	    }
+	} else if (v.is_string()) {
+	    ++stats.string_count;
+	    stats.total_string_length += v.get_string().size();
+	} else if (v.is_double()) {
+	    ++stats.number_count;
+	    stats.total_number_value += v.as_double();
+	} else if (v.is_int()) {
+	    ++stats.number_count;
+	    stats.total_number_value += v.as_int64();
+	} else {
+	    assert(false && "unknown node type");
+        }
+    }
+
+    void test(jsonstats& stats, const TestFile& file) {
+	ZeroTerminatedCopy data(file);
+	pjson::document doc;
+	doc.deserialize_in_place(data.get());
+	
+	traverse(stats, doc);
+    }
+}
+
 struct TestImplementation {
     typedef void (*TestFunction)(jsonstats&, const TestFile&);
 
@@ -448,6 +499,7 @@ TestImplementation test_implementations[] = {
     { "vjson", &vjson_test::test },
     { "yajl", &yajl_test::test },
     { "jansson", &jansson_test::test },
+    { "pjson", &pjson_test::test },
 };
 
 const char* benchmark_files[] = {
