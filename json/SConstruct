@@ -1,7 +1,7 @@
 import os
 
 def rapidjson(env):
-    env.AppendUnique(CPPPATH=['third-party/rapidjson-0.11/include'])
+    env.AppendUnique(CPPPATH=['third-party/rapidjson-1.1.0/include'])
 
 def yajl(env):
     env.AppendUnique(
