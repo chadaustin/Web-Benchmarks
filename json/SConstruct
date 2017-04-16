@@ -27,8 +27,8 @@ def pjson(env):
 
 env = Environment(
     ENV=os.environ,
-    CC='clang-3.5',
-    CXX='clang++-3.5',
+    CC='clang',
+    CXX='clang++',
     CCFLAGS=['-g', '-O2', '-fno-exceptions'],
     LINKFLAGS=['-O2'],
     CPPDEFINES=['NDEBUG'],
