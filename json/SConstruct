@@ -32,7 +32,7 @@ env = Environment(
     CCFLAGS=['-g', '-O2', '-fno-exceptions'],
     LINKFLAGS=['-O2'],
     CPPDEFINES=['NDEBUG'],
-    CXXFLAGS=['-std=c++0x', '-Wall'])
+    CXXFLAGS=['-std=c++11', '-Wall'])
 rapidjson(env)
 yajl(env)
 vjson(env)

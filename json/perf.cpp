@@ -496,9 +496,9 @@ struct TestImplementation {
 TestImplementation test_implementations[] = {
     { "sajson", &sajson_test::test },
     { "rapidjson", &rapidjson_test::test },
-    { "vjson", &vjson_test::test },
-    { "yajl", &yajl_test::test },
-    { "jansson", &jansson_test::test },
+    //{ "vjson", &vjson_test::test },
+    //{ "yajl", &yajl_test::test },
+    //{ "jansson", &jansson_test::test },
     { "pjson", &pjson_test::test },
 };
 
