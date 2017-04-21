@@ -248,32 +248,41 @@ namespace sajson {
     class mutable_string_view {
     public:
         mutable_string_view()
-            : length(0)
+            : length_(0)
             , data(0)
+            , owns(false)
+        {}
+
+        mutable_string_view(size_t length, char* data)
+            : length_(length)
+            , data(data)
+            , owns(false)
         {}
 
         mutable_string_view(const literal& s)
-            : length(s.length())
+            : length_(s.length())
+            , owns(true)
         {
-            data = new char[length];
-            memcpy(data, s.data(), length);
+            data = new char[length_];
+            memcpy(data, s.data(), length_);
         }
 
         mutable_string_view(const string& s)
-            : length(s.length())
+            : length_(s.length())
+            , owns(true)
         {
-            data = new char[length];
-            memcpy(data, s.data(), length);
+            data = new char[length_];
+            memcpy(data, s.data(), length_);
         }
 
         ~mutable_string_view() {
-            if (uses.count() == 1) {
+            if (uses.count() == 1 && owns) {
                 delete[] data;
             }
         }
 
-        size_t get_length() const {
-            return length;
+        size_t length() const {
+            return length_;
         }
 
         char* get_data() const {
@@ -282,8 +291,9 @@ namespace sajson {
         
     private:
         refcount uses;
-        size_t length;
+        size_t length_;
         char* data;
+        bool owns;
     };
 
     union integer_storage {
@@ -510,11 +520,11 @@ namespace sajson {
     public:
         parser(const mutable_string_view& msv, size_t* structure)
             : input(msv)
-            , input_end(input.get_data() + input.get_length())
+            , input_end(input.get_data() + input.length())
             , structure(structure)
             , temp(structure)
             , root_type(TYPE_NULL)
-            , out(structure + input.get_length())
+            , out(structure + input.length())
             , error_line(0)
             , error_column(0)
         {}
@@ -1084,6 +1094,17 @@ namespace sajson {
             ++p; // "
             size_t start = p - input.get_data();
             for (;;) {
+                if (SAJSON_UNLIKELY(input_end - p < 4)) {
+                    goto end_of_buffer;
+                }
+                if (!internal::is_plain_string_character(p[0])) { goto found; }
+                if (!internal::is_plain_string_character(p[1])) { p += 1; goto found; }
+                if (!internal::is_plain_string_character(p[2])) { p += 2; goto found; }
+                if (!internal::is_plain_string_character(p[3])) { p += 3; goto found; }
+                p += 4;
+            }
+        end_of_buffer:
+            for (;;) {
                 if (SAJSON_UNLIKELY(p >= input_end)) {
                     p_ = p;
                     return error(p, "unexpected end of input");
@@ -1096,6 +1117,7 @@ namespace sajson {
                 ++p;
             }
 
+        found:
             if (SAJSON_LIKELY(*p == '"')) {
                 tag[0] = start;
                 tag[1] = p - input.get_data();
