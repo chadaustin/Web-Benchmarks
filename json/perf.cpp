@@ -503,12 +503,15 @@ TestImplementation test_implementations[] = {
 };
 
 const char* benchmark_files[] = {
-    "testdata/twitter.json",
-    "testdata/apache_builds.json",
-    "testdata/github_events.json",
-    "testdata/instruments.json",
-    "testdata/mesh.json",
-    "testdata/update-center.json",
+    "testdata/min/apache_builds.min.json",
+    "testdata/min/github_events.min.json",
+    "testdata/min/instruments.min.json",
+    "testdata/min/mesh.min.json",
+    "testdata/min/svg_menu.min.json",
+    "testdata/min/twitter.min.json",
+    "testdata/min/update-center.min.json",
+    "testdata/nested.json",
+    "testdata/truenull.json",
 };
 
 const int CLOCKS_PER_TEST = CLOCKS_PER_SEC;
