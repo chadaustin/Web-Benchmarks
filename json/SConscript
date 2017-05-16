@@ -1,0 +1,3 @@
+Import('*')
+
+env.Program('perf', ['perf.cpp', 'libyajl.c', 'libjansson.c', 'libvjson.cpp'])

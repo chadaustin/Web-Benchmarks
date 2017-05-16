@@ -424,7 +424,7 @@ namespace sajson_test {
 
     void test(jsonstats& stats, const TestFile& file) {
         Copy data(file);
-        const auto& document = sajson::parse(sajson::mutable_string_view(file.length, data.get()));
+        const auto& document = sajson::parse(sajson::single_allocation(), sajson::mutable_string_view(file.length, data.get()));
         if (!document.is_valid()) {
             fprintf(stderr, "sajson parse error (%d,%d): %s\n",
                     static_cast<int>(document.get_error_line()),

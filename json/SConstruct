@@ -25,10 +25,18 @@ def pjson(env):
     env.AppendUnique(
         CPPPATH=['third-party/pjson'])
 
+def gcc(env):
+    env['CC'] = 'gcc'
+    env['CXX'] = 'g++'
+    env['LINK'] = 'g++'
+
+def clang(env):
+    env['CC'] = 'clang'
+    env['CXX'] = 'clang++'
+    env['LINK'] = 'clang++'
+
 env = Environment(
     ENV=os.environ,
-    CC='clang',
-    CXX='clang++',
     CCFLAGS=['-g', '-O2', '-fno-exceptions'],
     LINKFLAGS=['-O2'],
     CPPDEFINES=['NDEBUG'],
@@ -40,4 +48,12 @@ sajson(env)
 jansson(env)
 pjson(env)
 
-env.Program('perf', ['perf.cpp', 'libyajl.c', 'libjansson.c', 'libvjson.cpp'])
+builds = [
+    ('gcc', [gcc]),
+    ('clang', [clang]),
+]
+
+for name, tools in builds:
+    e = env.Clone(tools=tools)
+    e.Append(BUILDDIR=os.path.join('build', name))
+    e.SConscript('SConscript', variant_dir='$BUILDDIR', duplicate=0, exports={'env': e})
