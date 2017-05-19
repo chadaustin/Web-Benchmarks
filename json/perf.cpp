@@ -1,7 +1,9 @@
+#include <algorithm>
 #include <stddef.h>
 #include <stdio.h>
 #include <time.h>
 #include <vector>
+#include <float.h>
 
 #include <rapidjson/document.h>
 
@@ -520,7 +522,7 @@ const char* benchmark_files[] = {
     "testdata/truenull.json",
 };
 
-const double SECONDS_PER_TEST = 1.0;
+const double SECONDS_PER_TEST = 2.0;
 
 template<typename T, size_t L>
 size_t array_length(T(&)[L]) {
@@ -573,16 +575,19 @@ void benchmark(const char* filename) {
             
         double start = get_time();
         double until = start + SECONDS_PER_TEST;
-        double end;
+        double end = start;
+        double fastest = DBL_MAX;
         int parses = 0;
         do {
             implementation.func(this_stats, file);
             ++parses;
-        } while ((end = get_time()) < until);
-        double elapsed = end - start;
+            double next_end = get_time();
+            fastest = std::min(fastest, next_end - end);
+            end = next_end;
+        } while (end < until);
+        //double elapsed = end - start;
         
-        double secondsPerParse = elapsed / parses;
-        printf("%s,%s,%0.2f\n", implementation.name, filename, parses * length / elapsed / 1000000.0);
+        printf("%s,%s,%0.2f\n", implementation.name, filename, length / fastest / 1000000.0);
         fflush(stdout);
     }
 }
