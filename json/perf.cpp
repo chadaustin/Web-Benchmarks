@@ -520,11 +520,17 @@ const char* benchmark_files[] = {
     "testdata/truenull.json",
 };
 
-const int CLOCKS_PER_TEST = CLOCKS_PER_SEC;
+const double SECONDS_PER_TEST = 1.0;
 
 template<typename T, size_t L>
 size_t array_length(T(&)[L]) {
     return L;
+}
+
+static double get_time() {
+    timespec ts;
+    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
+    return double(ts.tv_sec) + double(ts.tv_nsec) / 1000000000.0;
 }
 
 void benchmark(const char* filename) {
@@ -565,23 +571,24 @@ void benchmark(const char* filename) {
             }
         }
             
-        clock_t start = clock();
-        clock_t until = start + CLOCKS_PER_TEST;
-        clock_t end;
+        double start = get_time();
+        double until = start + SECONDS_PER_TEST;
+        double end;
         int parses = 0;
         do {
             implementation.func(this_stats, file);
             ++parses;
-        } while ((end = clock()) < until);
-        double elapsed = double(end - start) / CLOCKS_PER_SEC;
+        } while ((end = get_time()) < until);
+        double elapsed = end - start;
+        
         double secondsPerParse = elapsed / parses;
-        printf("%s,%s,%f,%d,%f\n", implementation.name, filename, elapsed, parses, secondsPerParse);
+        printf("%s,%s,%0.2f\n", implementation.name, filename, parses * length / elapsed / 1000000.0);
         fflush(stdout);
     }
 }
 
 int main(int argc, const char** argv) {
-    printf("Implementation,File,Elapsed,Parses,SecondPerParse\n");
+    printf("Implementation,File,MB/s\n");
 
     if (argc <= 1) {
         for (size_t i = 0; i < array_length(benchmark_files); ++i) {
