@@ -1959,7 +1959,7 @@ namespace pjson
                key_value_t* pKey_value = m_stack.push<key_value_t>(1);
                pChild_variant = &pKey_value->get_value();
                pKey_value->get_key().m_p = (char*)pBuf;
-               pKey_value->get_key().m_size = static_cast<uint>(pDst - pBuf);
+               pKey_value->get_key().m_size = static_cast<uint>(pDst - pBuf - 1);
                
                PJSON_SKIP_WHITESPACE;
 
@@ -2085,7 +2085,7 @@ namespace pjson
 
                   string_vec_t& str = pChild_variant->get_string();
                   str.m_p = (char*)pBuf;
-                  str.m_size = static_cast<uint>(pDst - pBuf);
+                  str.m_size = static_cast<uint>(pDst - pBuf - 1);
 
                   break;
                }
