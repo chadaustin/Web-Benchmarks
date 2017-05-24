@@ -425,6 +425,11 @@ namespace sajson {
             return std::string(text + payload[0], text + payload[1]);
         }
 
+        const size_t* _internal_get_payload() const {
+            return payload;
+        }
+
+
     private:
         void assert_type(type expected) const {
             assert(expected == get_type());
@@ -523,8 +528,22 @@ namespace sajson {
             return error_column;
         }
 
-        std::string get_error_message() const {
+        const std::string& get_error_message() const {
             return error_message;
+        }
+        
+        /// WARNING: Internal function exposed only for high-performance language bindings.
+        type _internal_get_root_type() const {
+            return root_type;
+        }
+        
+        /// WARNING: Internal function exposed only for high-performance language bindings.
+        const size_t* _internal_get_root() const {
+            return root;
+        }
+
+        const mutable_string_view& _internal_get_input() const {
+            return input;
         }
 
     private:
@@ -973,140 +992,6 @@ namespace sajson {
         size_t initial_ast_capacity;
         size_t initial_stack_capacity;
     };
-
-    /*
-    class bounded_allocation {
-    public:
-        class stack_head {
-        public:
-            stack_head(stack_head&& other)
-                : stack_bottom(other.stack_bottom)
-                , stack_top(other.stack_top)
-            {}
-
-            bool has_allocation_error() {
-                return false;
-            }
-
-            // check has_allocation_error() immediately after calling
-            void push(size_t element) {
-                *stack_top++ = element;
-            }
-
-            // check has_allocation_error() immediately after calling
-            size_t* reserve(size_t amount) {
-                size_t* rv = stack_top;
-                stack_top += amount;
-                return rv;
-            }
-
-            // The compiler does not see the stack_head (stored in a local)
-            // and the allocator (stored as a field) have the same stack_bottom
-            // values, so it does a bit of redundant work.
-            // So there's a microoptimization available here: introduce a type
-            // "stack_mark" and make it polymorphic on the allocator.  For
-            // single_allocation, it merely needs to be a single pointer.
-
-            void reset(size_t new_top) {
-                stack_top = stack_bottom + new_top;
-            }
-
-            size_t get_size() {
-                return stack_top - stack_bottom;
-            }
-
-            size_t* get_top() {
-                return stack_top;
-            }
-
-            size_t* get_pointer_from_offset(size_t offset) {
-                return stack_bottom + offset;
-            }
-
-        private:
-            stack_head() = delete;
-            stack_head(const stack_head&) = delete;
-            void operator=(const stack_head&) = delete;
-
-            explicit stack_head(size_t* base)
-                : stack_bottom(base)
-                , stack_top(base)
-            {}
-
-            size_t* const stack_bottom;
-            size_t* stack_top;
-
-            friend class single_allocation;
-        };
-
-        bounded_allocation() = delete;
-        bounded_allocation(const bounded_allocation&) = delete;
-        void operator=(const bounded_allocation&) = delete;
-
-        explicit bounded_allocation(size_t input_size)
-            : structure(new(std::nothrow) size_t[input_size])
-            , structure_end(structure ? structure + input_size : 0)
-            , write_cursor(structure_end)
-        {}
-
-        single_allocation(single_allocation&& other)
-            : structure(other.structure)
-            , structure_end(other.structure_end)
-            , write_cursor(other.write_cursor)
-        {
-            other.structure = 0;
-            other.structure_end = 0;
-            other.write_cursor = 0;
-        }
-
-        ~single_allocation() {
-            delete[] structure;
-        }
-
-        stack_head get_stack_head() {
-            return stack_head(structure);
-        }
-
-        size_t get_write_offset() {
-            return structure_end - write_cursor;
-        }
-
-        size_t* get_write_pointer_of(size_t v) {
-            return structure_end - v;
-        }
-
-        bool failed_to_initialize() {
-            return !structure;
-        }
-
-        bool has_allocation_error() {
-            return false;
-        }
-
-        // check has_allocation_error immediately after calling
-        size_t* reserve(size_t size) {
-            write_cursor -= size;
-            return write_cursor;
-        }
-
-        size_t* get_ast_root() {
-            return write_cursor;
-        }
-
-        ownership transfer_ownership() {
-            auto p = structure;
-            structure = 0;
-            structure_end = 0;
-            write_cursor = 0;
-            return ownership(p);
-        }
-
-    private:
-        size_t* structure;
-        size_t* structure_end;
-        size_t* write_cursor;
-    };
-    */
 
     template<typename Allocator>
     class parser {
@@ -1783,16 +1668,19 @@ namespace sajson {
         char* parse_string(char* p, size_t* tag) {
             ++p; // "
             size_t start = p - input.get_data();
-            char* input_end_local = input_end;
-            while (input_end_local - p >= 4) {
+            for (;;) {
+                if (SAJSON_UNLIKELY(input_end - p < 4)) {
+                    goto end_of_buffer;
+                }
                 if (!internal::is_plain_string_character(p[0])) { goto found; }
                 if (!internal::is_plain_string_character(p[1])) { p += 1; goto found; }
                 if (!internal::is_plain_string_character(p[2])) { p += 2; goto found; }
                 if (!internal::is_plain_string_character(p[3])) { p += 3; goto found; }
                 p += 4;
             }
+        end_of_buffer:
             for (;;) {
-                if (SAJSON_UNLIKELY(p >= input_end_local)) {
+                if (SAJSON_UNLIKELY(p >= input_end)) {
                     return error(p, "unexpected end of input");
                 }
 
@@ -1802,6 +1690,7 @@ namespace sajson {
 
                 ++p;
             }
+
         found:
             if (SAJSON_LIKELY(*p == '"')) {
                 tag[0] = start;
@@ -1859,10 +1748,9 @@ namespace sajson {
 
         char* parse_string_slow(char* p, size_t* tag, size_t start) {
             char* end = p;
-            char* input_end_local = input_end;
             
             for (;;) {
-                if (SAJSON_UNLIKELY(p >= input_end_local)) {
+                if (SAJSON_UNLIKELY(p >= input_end)) {
                     return error(p, "unexpected end of input");
                 }
 
@@ -1878,7 +1766,7 @@ namespace sajson {
 
                     case '\\':
                         ++p;
-                        if (SAJSON_UNLIKELY(p >= input_end_local)) {
+                        if (SAJSON_UNLIKELY(p >= input_end)) {
                             return error(p, "unexpected end of input");
                         }
 

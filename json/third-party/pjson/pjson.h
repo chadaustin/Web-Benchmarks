@@ -481,7 +481,7 @@ namespace pjson
 
       inline void push_back(const T& obj, pool_allocator& alloc)
       {
-         PJSON_ASSERT(!m_p || (&obj < this->m_p) || (&obj >= (this->m_p + this->m_size)));
+         PJSON_ASSERT(!this->m_p || (&obj < this->m_p) || (&obj >= (this->m_p + this->m_size)));
          grow(this->m_size + 1, alloc);
          if (UseConstructor)
             ConstructionPolicy::copy_construct(this->m_p + this->m_size, obj, alloc);
@@ -492,7 +492,7 @@ namespace pjson
 
       inline void push_back(const T* p, uint n, pool_allocator& alloc)
       {
-         PJSON_ASSERT(!m_p || ((p + n) <= this->m_p) || (p >= (this->m_p + this->m_size)));
+         PJSON_ASSERT(!this->m_p || ((p + n) <= this->m_p) || (p >= (this->m_p + this->m_size)));
          T* pDst = enlarge_no_construct(n, alloc);
          if (UseConstructor)
          {
@@ -507,7 +507,7 @@ namespace pjson
 
       inline void assign(const T* p, uint n, pool_allocator& alloc)
       {
-         PJSON_ASSERT(!m_p || ((p + n) <= this->m_p) || (p >= (this->m_p + this->m_size)));
+         PJSON_ASSERT(!this->m_p || ((p + n) <= this->m_p) || (p >= (this->m_p + this->m_size)));
          
          const uint num_to_assign = PJSON_MIN(this->m_size, n);
          if (num_to_assign)

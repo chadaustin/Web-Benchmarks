@@ -23,6 +23,12 @@ namespace jansson {
     #include <jansson.h>
 }
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN 1
+#define NOMINMAX 1
+#include <windows.h>
+#endif
+
 struct jsonstats {
     jsonstats()
         : null_count(0)
@@ -179,7 +185,7 @@ namespace rapidjson_test {
         rapidjson::Document document;
         document.ParseInsitu<0>(data.get());
         if (document.HasParseError()) {
-            fprintf(stderr, "rapidjson parse error: %s\n", document.GetParseError());
+            fprintf(stderr, "rapidjson parse error: %d\n", document.GetParseError());
             abort();
         }
 
@@ -187,6 +193,7 @@ namespace rapidjson_test {
     }
 }
 
+/*
 namespace vjson_test {
     void traverse(jsonstats& stats, json_value* node) {
         switch (node->type) {
@@ -248,7 +255,9 @@ namespace vjson_test {
         traverse(stats, root);
     }
 }
+*/
 
+/*
 namespace yajl_test {
     void traverse(jsonstats& stats, yajl_val node) {
         if (YAJL_IS_NULL(node)) {
@@ -301,7 +310,9 @@ namespace yajl_test {
         yajl_tree_free(node);
     }
 }
+*/
 
+/*
 namespace jansson_test {
     using namespace jansson;
 
@@ -376,6 +387,7 @@ namespace jansson_test {
         json_decref(root);
     }
 }
+*/
 
 namespace sajson_test {
     void traverse(jsonstats& stats, const sajson::value& node) {
@@ -518,8 +530,8 @@ const char* benchmark_files[] = {
     "testdata/min/svg_menu.min.json",
     "testdata/min/twitter.min.json",
     "testdata/min/update-center.min.json",
-    "testdata/nested.json",
-    "testdata/truenull.json",
+    //"testdata/nested.json",
+    //"testdata/truenull.json",
 };
 
 const double SECONDS_PER_TEST = 2.0;
@@ -529,11 +541,38 @@ size_t array_length(T(&)[L]) {
     return L;
 }
 
+#ifdef _WIN32
+
+struct QPCFrequency {
+    QPCFrequency() {
+        LARGE_INTEGER li;
+        li.QuadPart = 1;
+        QueryPerformanceFrequency(&li);
+        frequency = double(li.QuadPart);
+
+        QueryPerformanceCounter(&li);
+        start = li.QuadPart;
+    }
+
+    __int64 start;
+    double frequency;
+} QPC;
+
+static double get_time() {
+    LARGE_INTEGER li;
+    QueryPerformanceCounter(&li);
+    return double(li.QuadPart - QPC.start) / QPC.frequency;
+}
+
+#else
+
 static double get_time() {
     timespec ts;
     clock_gettime(CLOCK_THREAD_CPUTIME_ID, &ts);
     return double(ts.tv_sec) + double(ts.tv_nsec) / 1000000000.0;
 }
+
+#endif
 
 void benchmark(const char* filename) {
     FILE* fh = fopen(filename, "rb");
